@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ order.reference }} - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-4xl mx-auto w-full">
+    <a href="{% url 'inventory:purchase_orders' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Purchase Orders
+    </a>
+
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-md mb-md">
+        <div>
+            <div class="flex items-center gap-sm flex-wrap">
+                <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">{{ order.reference }}</h1>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-label-md text-[11px] border
+                    {% if order.status == 'received' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                    {% elif order.status == 'cancelled' %}bg-red-50 text-red-700 border-red-100
+                    {% elif order.status == 'ordered' %}bg-amber-50 text-amber-700 border-amber-100
+                    {% else %}bg-surface-container text-on-surface-variant border-outline-variant{% endif %}">
+                    <span class="w-1.5 h-1.5 rounded-full
+                        {% if order.status == 'received' %}bg-emerald-600
+                        {% elif order.status == 'cancelled' %}bg-red-600
+                        {% elif order.status == 'ordered' %}bg-amber-600
+                        {% else %}bg-secondary{% endif %}"></span>
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-sm mt-2 font-body-md text-[13px] text-on-surface-variant">
+                <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-secondary">storefront</span>{{ order.supplier.name }}</span>
+                <span class="text-outline-variant">&rarr;</span>
+                <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-secondary">location_on</span>{{ order.branch.name }}</span>
+                <span class="inline-flex items-center gap-1 text-[12px]"><span class="material-symbols-outlined text-[14px] text-secondary">event</span>{{ order.created_at|date:"M d, Y" }}</span>
+                {% if order.received_at %}
+                <span class="inline-flex items-center gap-1 text-[12px] text-emerald-700"><span class="material-symbols-outlined text-[14px]">check_circle</span>received {{ order.received_at|date:"M d, Y H:i" }}</span>
+                {% endif %}
+            </div>
+            {% if order.notes %}<p class="font-body-md text-[13px] text-secondary mt-1.5 italic">"{{ order.notes }}"</p>{% endif %}
+        </div>
+        <div class="flex gap-xs shrink-0">
+            <a href="{% url 'inventory:purchase_order_receipt' order.pk %}" class="h-10 px-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[16px]">receipt_long</span> Receipt
+            </a>
+            {% if order.is_open %}
+            <form method="post" action="{% url 'inventory:purchase_order_cancel' order.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="h-10 px-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-error-container hover:text-on-error-container transition-colors flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[16px]">cancel</span> Cancel Order
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.3fr] gap-sm mb-md items-stretch">
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm p-lg flex flex-col gap-md">
+            <div class="flex items-center justify-between">
+                <span class="font-label-md text-[11px] text-secondary uppercase tracking-wider">Units Received</span>
+                <span class="material-symbols-outlined text-primary text-[16px]">inventory_2</span>
+            </div>
+            <div>
+                <p class="font-mono-data text-[24px] font-bold text-on-surface leading-none">{{ order.units_received }} <span class="text-secondary text-[14px] font-normal">/ {{ order.units_ordered }} units</span></p>
+                <div class="h-1.5 rounded-full bg-surface-container-high mt-2 overflow-hidden">
+                    <div class="h-full bg-primary rounded-full" style="width: {% widthratio order.units_received order.units_ordered 100 %}%"></div>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 font-body-md text-[12px] text-secondary mt-auto">
+                <span class="material-symbols-outlined text-[14px]">list_alt</span>
+                {{ order.lines.count }} product{{ order.lines.count|pluralize }} on this order
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm p-lg">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5 mb-sm">
+                <span class="material-symbols-outlined text-[18px] text-primary">receipt_long</span> Order Totals
+            </h2>
+            <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-center font-body-md text-[13px] text-secondary">
+                    <span>Subtotal</span>
+                    <span class="font-mono-data text-on-surface">${{ order.subtotal|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="flex justify-between items-center font-body-md text-[13px] text-secondary">
+                    <span>Standard Discount
+                        {% if order.supplier.default_discount_percentage %}<span class="font-mono-data text-[11px]">({{ order.supplier.default_discount_percentage|floatformat:-2 }}% vendor default)</span>{% endif %}
+                    </span>
+                    <span class="font-mono-data {% if order.standard_discount %}text-emerald-700{% else %}text-on-surface{% endif %}">
+                        {% if order.standard_discount %}-{% endif %}${{ order.standard_discount|floatformat:2|intcomma }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center font-body-md text-[13px] text-secondary gap-sm">
+                    <span class="shrink-0">Manual Discount <span class="text-[11px]">(from invoice)</span></span>
+                    {% if order.is_open %}
+                    <form method="post" action="{% url 'inventory:purchase_order_set_discount' order.pk %}" id="manual-discount-form" class="flex items-center gap-1">
+                        {% csrf_token %}
+                        <span class="font-mono-data text-on-surface-variant">$</span>
+                        <input type="number" step="0.01" min="0" name="manual_discount" value="{{ order.manual_discount|floatformat:2 }}" id="id_manual_discount"
+                               class="h-8 w-24 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-mono-data text-[12px]"/>
+                        <button type="submit" id="apply-manual-discount" class="h-8 px-2.5 rounded-lg border border-outline-variant text-[11px] font-label-md text-on-surface-variant hover:bg-primary-container/10 hover:text-primary hover:border-primary transition-colors">Apply</button>
+                    </form>
+                    {% else %}
+                    <span class="font-mono-data {% if order.manual_discount %}text-emerald-700{% else %}text-on-surface{% endif %}">
+                        {% if order.manual_discount %}-{% endif %}${{ order.manual_discount|floatformat:2|intcomma }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between items-center font-headline-sm text-headline-sm font-bold text-on-surface pt-2 border-t border-outline-variant">
+                    <span>Grand Total</span>
+                    <span class="font-mono-data" id="grand-total-display">${{ order.grand_total|floatformat:2|intcomma }}</span>
+                </div>
+                {% if order.savings_vs_standard %}
+                <p class="font-body-md text-[11px] text-secondary text-right">
+                    {% if order.savings_vs_standard > 0 %}<span class="text-emerald-700">${{ order.savings_vs_standard|floatformat:2|intcomma }} below</span>{% else %}<span class="text-error">${{ order.savings_vs_standard|floatformat:2|intcomma|cut:"-" }} above</span>{% endif %}
+                    catalog standard cost
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'inventory:purchase_order_receive' order.pk %}">
+        {% csrf_token %}
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-outline-variant {% if order.is_open %}bg-surface-container-low{% endif %} flex items-center justify-between gap-sm flex-wrap">
+                <div>
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[18px] text-primary">inventory</span>
+                        {% if order.is_open %}Receive Delivery{% else %}Line Items{% endif %}
+                    </h2>
+                    {% if order.is_open %}<p class="font-body-md text-[12px] text-secondary mt-0.5">Set how many units of each line arrived in this delivery, then book it into {{ order.branch.name }}'s stock.</p>{% endif %}
+                </div>
+                {% if order.is_open %}
+                <div class="flex gap-xs">
+                    <button type="button" data-action="fill-all-received" class="h-8 px-sm rounded-md border border-outline-variant text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors font-label-md text-[11px]">Fill All Outstanding</button>
+                    <button type="button" data-action="clear-all-received" class="h-8 px-sm rounded-md border border-outline-variant text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors font-label-md text-[11px]">Clear</button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+                        <th class="pl-5 pr-1 py-4 w-8"></th>
+                        <th class="px-2 py-4 font-semibold">Product</th>
+                        <th class="px-3 py-4 font-semibold text-right">Ordered</th>
+                        <th class="px-3 py-4 font-semibold text-right">Received</th>
+                        <th class="px-3 py-4 font-semibold text-right">Unit Cost</th>
+                        <th class="px-3 py-4 font-semibold text-right">Disc</th>
+                        {% if order.is_open %}<th class="px-5 py-4 font-semibold text-right bg-primary-container/10">Receive Now</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody class="font-body-md text-[14px] text-on-surface">
+                    {% for line in order.lines.all %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0">
+                        <td class="pl-5 pr-1 py-3">
+                            {% if line.quantity_received >= line.quantity_ordered %}
+                            <span class="material-symbols-outlined text-[18px] text-emerald-600" title="Fully received">check_circle</span>
+                            {% elif line.quantity_received > 0 %}
+                            <span class="material-symbols-outlined text-[18px] text-amber-500" title="Partially received">incomplete_circle</span>
+                            {% else %}
+                            <span class="material-symbols-outlined text-[18px] text-outline-variant" title="Not yet received">radio_button_unchecked</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-2 py-3">
+                            <div>{{ line.product.name }}</div>
+                            <div class="font-mono-data text-[12px] text-secondary">{{ line.product.sku }}</div>
+                        </td>
+                        <td class="px-3 py-3 text-right font-mono-data">{{ line.quantity_ordered }}</td>
+                        <td class="px-3 py-3 text-right font-mono-data {% if line.outstanding %}text-amber-700{% else %}text-tertiary{% endif %}">{{ line.quantity_received }}</td>
+                        <td class="px-3 py-3 text-right font-mono-data">${{ line.unit_cost|floatformat:2 }}</td>
+                        <td class="px-3 py-3 text-right">
+                            {% if line.discount_percent %}
+                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-label-md text-[11px]" title="{{ line.discount_percent|floatformat:-2 }}% quoted by the vendor">
+                                <span class="material-symbols-outlined text-[11px]">sell</span>{{ line.discount_percent|floatformat:-2 }}%
+                            </span>
+                            {% elif line.auto_discount_percent %}
+                            <span class="font-mono-data text-[12px] {% if line.auto_discount_percent > 0 %}text-emerald-700{% elif line.auto_discount_percent < 0 %}text-error{% endif %}"
+                                  title="{{ line.auto_discount_percent|floatformat:1 }}% vs. this product's standard cost of ${{ line.reference_cost|floatformat:2 }}">
+                                {{ line.auto_discount_percent|floatformat:1 }}%
+                            </span>
+                            {% elif line.allocated_order_discount %}
+                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-md text-[11px]"
+                                  title="This line's share of the order's ${{ order.total_discount|floatformat:2 }} total discount ({{ order.total_discount_percent|floatformat:1 }}%), allocated proportionally by cost">
+                                <span class="material-symbols-outlined text-[11px]">sell</span>-${{ line.allocated_order_discount|floatformat:2 }}
+                            </span>
+                            {% else %}
+                            <span class="text-outline-variant font-mono-data text-[12px]">—</span>
+                            {% endif %}
+                        </td>
+                        {% if order.is_open %}
+                        <td class="px-5 py-2 text-right bg-primary-container/10">
+                            <input type="number" name="received_{{ line.id }}" min="0" max="{{ line.outstanding }}" value="{{ line.outstanding }}"
+                                   data-received-input data-outstanding="{{ line.outstanding }}"
+                                   class="h-9 w-24 px-2 text-right rounded-lg border border-primary/30 bg-surface-container-lowest pos-input font-mono-data text-[13px] font-semibold"/>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="bg-surface-container-low font-body-md text-[14px]">
+                        <td class="pl-5 pr-1 py-3"></td>
+                        <td class="px-2 py-3 font-semibold">Total</td>
+                        <td class="px-3 py-3 text-right font-mono-data font-semibold">{{ order.units_ordered }}</td>
+                        <td class="px-3 py-3 text-right font-mono-data font-semibold">{{ order.units_received }}</td>
+                        <td class="px-3 py-3 text-right font-mono-data font-semibold" colspan="2" id="table-total-display" title="Sum of line items minus the order's total discount">${{ order.grand_total|floatformat:2|intcomma }}</td>
+                        {% if order.is_open %}<td class="bg-primary-container/10"></td>{% endif %}
+                    </tr>
+                </tfoot>
+            </table>
+            </div>
+            {% if order.is_open %}
+            <div class="px-5 py-4 border-t border-outline-variant flex items-center justify-between gap-sm">
+                <span id="receive-summary" class="font-body-md text-[13px] text-secondary"></span>
+                <button type="submit" class="h-11 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">inventory</span> Book Received Stock
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+</div>
+{% if order.is_open %}
+<script>
+(function () {
+    const inputs = document.querySelectorAll('[data-received-input]');
+    const summary = document.getElementById('receive-summary');
+
+    function updateSummary() {
+        if (!summary) return;
+        let units = 0;
+        let lines = 0;
+        inputs.forEach((input) => {
+            const qty = parseFloat(input.value) || 0;
+            if (qty > 0) {
+                units += qty;
+                lines += 1;
+            }
+        });
+        summary.textContent = units > 0
+            ? `Receiving ${units} unit${units === 1 ? '' : 's'} across ${lines} line${lines === 1 ? '' : 's'}.`
+            : 'Nothing selected to receive yet.';
+    }
+
+    document.addEventListener('click', (e) => {
+        const fillBtn = e.target.closest('[data-action="fill-all-received"]');
+        const clearBtn = e.target.closest('[data-action="clear-all-received"]');
+        if (!fillBtn && !clearBtn) return;
+        inputs.forEach((input) => {
+            input.value = fillBtn ? input.dataset.outstanding : 0;
+        });
+        updateSummary();
+    });
+
+    inputs.forEach((input) => input.addEventListener('input', updateSummary));
+    updateSummary();
+})();
+</script>
+<script>
+(function () {
+    const input = document.getElementById('id_manual_discount');
+    const applyBtn = document.getElementById('apply-manual-discount');
+    const totalEl = document.getElementById('grand-total-display');
+    const tableTotalEl = document.getElementById('table-total-display');
+    if (!input || !totalEl) return;
+
+    const subtotal = parseFloat('{{ order.subtotal|floatformat:2 }}');
+    const standardDiscount = parseFloat('{{ order.standard_discount|floatformat:2 }}');
+    const money = (n) => `$${n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+
+    function recalculate() {
+        const maxManual = Math.max(0, subtotal - standardDiscount);
+        let manual = parseFloat(input.value) || 0;
+        if (manual < 0) manual = 0;
+        if (manual > maxManual) manual = maxManual;
+        // Table Total = Sum of Line Items - Total Discounts (standard + manual)
+        const tableTotal = Math.max(0, subtotal - standardDiscount - manual);
+        totalEl.textContent = money(tableTotal);
+        if (tableTotalEl) tableTotalEl.textContent = money(tableTotal);
+    }
+
+    input.addEventListener('input', recalculate);
+    if (applyBtn) applyBtn.addEventListener('click', recalculate);
+    recalculate();
+})();
+</script>
+{% endif %}
+{% endblock %}

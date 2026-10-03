@@ -1,0 +1,164 @@
+{% load humanize %}
+<div class="flex justify-between items-center border-b border-outline-variant pb-sm gap-sm flex-wrap">
+    <div class="flex items-center gap-xs min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-primary text-[18px]">palette</span>
+        </div>
+        <div class="min-w-0">
+            <h1 class="font-headline-md text-headline-md text-on-surface font-semibold leading-tight">Tinting Desk</h1>
+            <p class="font-body-md text-[12px] text-secondary">Mix a custom color for a base can</p>
+        </div>
+    </div>
+    {% if tintable_products %}
+    <div class="flex items-center gap-xs bg-surface-container-lowest border border-outline-variant rounded-lg px-sm h-8 shadow-sm">
+        <span class="material-symbols-outlined text-[15px] text-secondary">inventory_2</span>
+        <select id="base-product-select" data-action="tint-control" data-field="product_id" class="font-label-md text-label-md text-on-surface bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none py-0 pr-6">
+            {% for p in tintable_products %}
+            <option value="{{ p.id }}" {% if base_product and p.id == base_product.id %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% else %}
+    <span class="text-error font-body-md text-[12px]">No tintable products in catalog</span>
+    {% endif %}
+</div>
+<input type="hidden" id="shade-id-input" data-action="tint-control" data-field="shade_id" value="{{ shade_id }}"/>
+
+{% if mixes_locked %}
+<div class="flex items-center gap-xs bg-amber-50 border border-amber-200 rounded-lg px-sm py-xs">
+    <span class="material-symbols-outlined text-amber-600 text-[16px]">lock</span>
+    <p class="font-body-md text-[11px] text-amber-800">Custom mixing is locked at this branch — pick a shade from the <a href="{% url 'catalog:color_menu' %}" class="underline font-medium">Color Menu</a>, or ask a manager to add it.</p>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 @4xl:grid-cols-2 gap-sm flex-1 min-w-0">
+    <div class="flex flex-col gap-sm min-w-0">
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Base Can Size</label>
+            <div class="flex gap-xs">
+                {% for value, label in base_size_choices %}
+                <button type="button" data-action="tint-control" data-field="base_size" data-value="{{ value }}" data-active="{% if base_size == value %}true{% else %}false{% endif %}"
+                        class="flex-1 h-9 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors
+                        {% if base_size == value %}border-2 border-primary bg-primary-fixed bg-opacity-20 text-primary shadow-sm{% else %}border border-outline-variant hover:bg-surface-container text-on-surface{% endif %}">
+                    <span class="material-symbols-outlined text-[14px]">water_drop</span>
+                    <span class="font-label-md text-label-md {% if base_size == value %}font-bold{% endif %}">{{ label }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm flex flex-col min-h-[220px] min-w-0 gap-xs">
+            <label class="block font-label-md text-label-md text-on-surface-variant uppercase">Color Selection</label>
+
+            <div class="flex items-center gap-xs bg-surface-container-low border border-outline-variant rounded-lg p-xs min-w-0">
+                <div id="color-swatch" class="w-11 h-11 rounded-md border border-outline-variant shadow-inner shrink-0" style="background-color: #{{ hex_color }};"></div>
+                <div class="flex-1 min-w-0">
+                    <input id="formula-name-input" data-action="tint-control" data-field="name" type="text" value="{{ name }}" placeholder="Custom Mix #{{ hex_color }}" {% if mixes_locked %}readonly{% endif %} class="w-full font-body-lg text-body-lg text-on-surface bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none truncate"/>
+                    <span id="hex-readout" class="font-mono-data text-mono-data text-secondary text-[11px] uppercase">#{{ hex_color }}</span>
+                </div>
+                <select id="finish-select" data-action="tint-control" data-field="finish" {% if mixes_locked %}disabled{% endif %} class="h-7 pl-sm pr-6 py-0 bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none font-body-md text-[12px] shrink-0 border-l border-outline-variant disabled:opacity-60">
+                    {% for f in finish_choices %}
+                    <option value="{{ f }}" {% if finish == f %}selected{% endif %}>{{ f|default:"No finish" }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if mixes_locked %}
+            <div class="flex-1 flex flex-col items-center justify-center gap-xs text-center py-md">
+                {% if locked_shade %}
+                <span class="material-symbols-outlined text-[28px] text-tertiary">check_circle</span>
+                <p class="font-body-md text-[12px] text-secondary">Loaded from the Color Menu — ready to add as-is.</p>
+                {% else %}
+                <span class="material-symbols-outlined text-[28px] text-outline-variant">lock</span>
+                <p class="font-body-md text-[12px] text-secondary max-w-[220px]">Pick a shade from the Color Menu to continue — manual color entry is off at this branch.</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="flex flex-col @md:flex-row gap-md flex-1 min-w-0">
+                <div class="w-full @md:w-28 shrink-0 flex flex-col items-center gap-xs">
+                    <div id="color-wheel" class="w-24 h-24 rounded-full border-4 border-surface-container-high bg-[conic-gradient(red,yellow,lime,aqua,blue,magenta,red)] shadow-sm relative cursor-crosshair mx-auto"></div>
+                    <p class="text-center font-body-md text-[10px] text-secondary leading-tight">Click the wheel for a hue, then fine-tune with HEX/RGB</p>
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col gap-xs justify-center @md:border-l @md:border-outline-variant @md:pl-md">
+                    <div class="flex border border-outline-variant rounded-lg overflow-hidden h-8 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                        <div class="w-12 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">HEX</div>
+                        <input id="hex-input" data-action="tint-control" data-field="hex" class="flex-1 px-sm bg-surface-container-lowest border-none outline-none font-mono-data text-mono-data focus:outline-none focus:ring-0 shadow-none uppercase" type="text" maxlength="6" value="{{ hex_color }}"/>
+                    </div>
+                    <div class="flex border border-outline-variant rounded-lg overflow-hidden h-8 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                        <div class="w-12 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">R</div>
+                        <input id="r-input" data-action="tint-control" data-field="r" class="flex-1 px-sm bg-surface-container-lowest border-none outline-none font-mono-data text-mono-data focus:outline-none focus:ring-0 shadow-none" type="number" min="0" max="255" value="{{ r }}"/>
+                    </div>
+                    <div class="flex border border-outline-variant rounded-lg overflow-hidden h-8 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                        <div class="w-12 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">G</div>
+                        <input id="g-input" data-action="tint-control" data-field="g" class="flex-1 px-sm bg-surface-container-lowest border-none outline-none font-mono-data text-mono-data focus:outline-none focus:ring-0 shadow-none" type="number" min="0" max="255" value="{{ g }}"/>
+                    </div>
+                    <div class="flex border border-outline-variant rounded-lg overflow-hidden h-8 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                        <div class="w-12 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">B</div>
+                        <input id="b-input" data-action="tint-control" data-field="b" class="flex-1 px-sm bg-surface-container-lowest border-none outline-none font-mono-data text-mono-data focus:outline-none focus:ring-0 shadow-none" type="number" min="0" max="255" value="{{ b }}"/>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-lg flex flex-col shadow-sm overflow-hidden h-full min-w-0">
+        <div class="p-sm bg-surface-container-low border-b border-outline-variant">
+            <div class="flex justify-between items-center mb-xs">
+                <label class="font-label-md text-label-md text-on-surface-variant uppercase">Pigment Formula &middot; {{ base_size }}</label>
+                <span class="font-mono-data text-[12px] text-on-surface font-semibold">{{ tint_result.total_volume_ml|floatformat:1 }} / {{ tint_result.capacity_ml|floatformat:0 }} ml</span>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-surface-variant overflow-hidden">
+                <div class="h-full rounded-full transition-all {% if tint_result.warning %}bg-error{% elif fill_percent > 70 %}bg-amber-500{% else %}bg-tertiary{% endif %}" style="width: {{ fill_percent }}%;"></div>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <div class="flex px-sm py-xs bg-surface-container border-b border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase">
+                <div class="w-10">ID</div>
+                <div class="flex-1">Pigment Name</div>
+                <div class="w-20 text-right">Shots (Y)</div>
+                <div class="w-24 text-right">Volume (ml)</div>
+            </div>
+            <div class="flex flex-col">
+                {% for line in tint_result.lines %}
+                <div class="flex items-center px-sm h-9 border-b border-outline-variant border-opacity-50 hover:bg-surface-container-low transition-colors {% cycle 'bg-transparent' 'bg-surface-container-lowest' %}">
+                    <div class="w-10 font-mono-data text-mono-data text-secondary">{{ line.pigment.code }}</div>
+                    <div class="flex-1 flex items-center gap-xs">
+                        <div class="w-4 h-4 rounded-full border border-outline-variant shadow-sm" style="background-color: {{ line.pigment.hex_color }};"></div>
+                        <span class="font-body-md text-body-md text-on-surface font-medium">{{ line.pigment.name }}</span>
+                    </div>
+                    <div class="w-20 text-right font-mono-data text-mono-data text-on-surface">{{ line.shots }}</div>
+                    <div class="w-24 text-right font-mono-data text-mono-data text-on-surface font-semibold">{{ line.volume_ml }} ml</div>
+                </div>
+                {% empty %}
+                <div class="p-md flex flex-col items-center text-center gap-xs">
+                    <span class="material-symbols-outlined text-[26px] text-outline-variant">colorize</span>
+                    <p class="text-secondary font-body-md text-body-md">Pick a color on the left to generate a pigment formula.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="p-sm bg-surface border-t border-outline-variant mt-auto flex flex-col gap-xs">
+            {% if tint_result.warning %}
+            <div class="flex items-start gap-xs bg-[#FFF1F0] p-sm rounded-lg border border-[#FFA39E]">
+                <span class="material-symbols-outlined text-[#CF1322] text-[18px]">info</span>
+                <div>
+                    <h4 class="font-label-md text-label-md text-[#A8071A] font-bold">Can Capacity Warning</h4>
+                    <p class="font-body-md text-[12px] text-[#CF1322] mt-xs">Total pigment volume ({{ tint_result.total_volume_ml|floatformat:1 }} ml) approaches the maximum fill line for this {{ base_size }} base can. Ensure careful mixing to avoid overflow.</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if estimated_total %}
+            <div class="flex justify-between items-center px-xs">
+                <span class="font-body-md text-[12px] text-secondary">{{ base_product.name }} + tint charge (${{ estimated_surcharge|floatformat:2|intcomma }})</span>
+                <span class="font-mono-data text-[14px] font-bold text-on-surface">${{ estimated_total|floatformat:2|intcomma }}</span>
+            </div>
+            {% endif %}
+            <button type="button" data-action="tint-add" {% if not tint_result.lines %}disabled{% endif %}
+                    class="w-full h-10 rounded-lg font-label-md text-label-md shadow-sm transition-colors flex items-center justify-center gap-xs
+                    {% if tint_result.lines %}bg-primary text-on-primary hover:bg-primary-container{% else %}bg-surface-container-high text-secondary cursor-not-allowed{% endif %}">
+                <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span> Add Tinted Paint to Cart
+            </button>
+        </div>
+    </div>
+</div>

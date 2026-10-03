@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ChromaPOS - Sales &amp; Tinting Desk</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#d9dadb",
+                        "background": "#f8f9fa",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#004ac6",
+                        "on-tertiary-container": "#bdffdb",
+                        "on-background": "#191c1d",
+                        "surface-tint": "#0053db",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#002113",
+                        "on-secondary-fixed": "#111c2d",
+                        "outline-variant": "#c3c6d7",
+                        "tertiary": "#006242",
+                        "on-secondary-container": "#586377",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#2563eb",
+                        "surface": "#f8f9fa",
+                        "surface-variant": "#e1e3e4",
+                        "inverse-surface": "#2e3132",
+                        "secondary-container": "#d5e0f8",
+                        "primary-fixed": "#dbe1ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "on-surface-variant": "#434655",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "tertiary-fixed": "#6ffbbe",
+                        "surface-container": "#edeeef",
+                        "inverse-primary": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "secondary": "#545f73",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface-container-high": "#e7e8e9",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-highest": "#e1e3e4",
+                        "tertiary-container": "#007d55",
+                        "outline": "#737686",
+                        "surface-bright": "#f8f9fa",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "sm": "8px",
+                        "container-margin": "24px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "mono-data": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-data": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Scrollbar for POS environment */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e1e3e4; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c3c6d7; }
+        
+        /* Specific input styling based on guidance */
+        .pos-input {
+            border: 1px solid #E2E8F0;
+        }
+        .pos-input:focus {
+            border: 2px solid #004ac6;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-screen overflow-hidden flex selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar -->
+<nav class="docked h-screen left-0 w-60 flex flex-col h-full py-md px-base gap-xs border-r border-outline-variant bg-surface-container dark:bg-surface-container-low hidden md:flex z-50">
+<!-- Header -->
+<div class="flex items-center gap-md p-sm mb-lg">
+<div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-outline-variant bg-surface-container-lowest">
+<img alt="Branch Logo" class="w-full h-full object-cover" data-alt="A clean, minimalist logo of a modern paint and hardware store branch. The design features geometric shapes and a vibrant, professional corporate color palette suitable for a retail POS system. High-quality vector-style graphic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9QYJK5Je48kHuDFwpqIDS03lw3xZRnC6pWmE5lyd0r3OiCGwzd3Aa28jqfa3Lg7kDZRigKexJBCc3FlXjjMxBMZQeCM3lDwehqFMtSfZG8Uwahxu871YkOFFSIH0mrCPR40k393QSMCI9HPz6B0rTGkL9M9sVlxaE96PM6KkMas3HuDi3i9VJyAP_gH5iQ3EFTvpWTXSeS3OhIY6of70Gtgmx0n0V5o3GLxU9M7UvzuDvAh_PyXL0vA"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm font-extrabold text-on-surface dark:text-on-surface-variant truncate">Downtown Branch</span>
+<span class="font-label-md text-label-md text-secondary truncate">Active Session: 8h</span>
+</div>
+</div>
+<!-- Quick Mix CTA -->
+<div class="px-sm mb-md">
+<button class="w-full h-10 bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Quick Mix
+            </button>
+</div>
+<!-- Main Navigation -->
+<div class="flex flex-col gap-xs flex-1 overflow-y-auto">
+<a class="flex items-center gap-md px-sm py-[10px] bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl font-bold hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined" data-weight="fill">point_of_sale</span>
+<span class="font-label-md text-label-md">Sales</span>
+</a>
+<a class="flex items-center gap-md px-sm py-[10px] text-on-surface-variant dark:text-surface-variant rounded-xl font-medium hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined">palette</span>
+<span class="font-label-md text-label-md">Tinting Desk</span>
+</a>
+<a class="flex items-center gap-md px-sm py-[10px] text-on-surface-variant dark:text-surface-variant rounded-xl font-medium hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+<a class="flex items-center gap-md px-sm py-[10px] text-on-surface-variant dark:text-surface-variant rounded-xl font-medium hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">Customer History</span>
+</a>
+<a class="flex items-center gap-md px-sm py-[10px] text-on-surface-variant dark:text-surface-variant rounded-xl font-medium hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+</div>
+<!-- Footer Navigation -->
+<div class="flex flex-col gap-xs mt-auto pt-md border-t border-outline-variant">
+<a class="flex items-center gap-md px-sm py-[10px] text-on-surface-variant dark:text-surface-variant rounded-xl font-medium hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-sm py-[10px] text-on-surface-variant dark:text-surface-variant rounded-xl font-medium hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- TopNavBar -->
+<header class="docked full-width top-0 flex justify-between items-center h-16 px-lg w-full z-40 bg-surface dark:bg-inverse-surface border-b border-outline-variant shadow-sm">
+<!-- Left: Brand / Branch Context -->
+<div class="flex items-center gap-lg">
+<div class="font-display-lg text-display-lg font-bold text-primary dark:text-primary-fixed md:hidden">ChromaPOS</div>
+<div class="hidden md:flex items-center gap-sm bg-surface-container-high px-sm py-xs rounded-full border border-outline-variant">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></div>
+<span class="font-label-md text-label-md text-on-surface">Downtown Branch Online</span>
+</div>
+</div>
+<!-- Middle: Search (Hidden on Mobile) -->
+<div class="hidden md:flex flex-1 max-w-md mx-lg">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full h-10 pl-10 pr-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-body-md text-body-md focus:ring-0" placeholder="Search products, customers, invoices..." type="text"/>
+</div>
+</div>
+<!-- Right: Actions & Profile -->
+<div class="flex items-center gap-sm shrink-0">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors text-primary dark:text-primary-fixed">
+<span class="material-symbols-outlined">cloud_done</span>
+</button>
+<div class="w-px h-6 bg-outline-variant mx-xs"></div>
+<button class="h-10 px-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-high transition-colors">Tint Lookup</button>
+<button class="h-10 px-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-colors">New Sale</button>
+<div class="w-px h-6 bg-outline-variant mx-xs"></div>
+<button class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant hover:ring-2 hover:ring-primary-container transition-all ml-xs">
+<img alt="Store Manager Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a store manager in a brightly lit retail environment. Smiling slightly, approachable, wearing a neat uniform. Soft, natural lighting. Shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvN3sAs9OM9nF5nqn9PABZ1rloQYRb-N05hBPtA-lPoIQ9y-7LwR_ZOB2ItkG2A4y0uX57mObr7ghbCFiJKT0X0sGL5BIo6sBegwdWGu5XW6kWmzt_4bZz4SB08RTiFHTXZINtwNRGgjYX3HRfFErPma7NvvWUQpXN4csBWC4vMG5pTbd2o5oscKJKMCoR6Dydn2e2-uO746V_aglEPs-Ft_z62t_sZIq2BMEL7deXrPSvadFXJw0JbQ"/>
+</button>
+</div>
+</header>
+<!-- Main Workspace (Split View) -->
+<main class="flex-1 flex overflow-hidden bg-background">
+<!-- Panel 1: Fast-checkout register -->
+<section class="w-1/3 min-w-[340px] max-w-[480px] h-full flex flex-col border-r border-outline-variant bg-surface-container-lowest">
+<!-- Scanner Input -->
+<div class="p-lg border-b border-outline-variant bg-surface">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">BARCODE SCANNER</label>
+<div class="flex gap-sm">
+<input autofocus="" class="flex-1 h-12 px-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-mono-data text-mono-data focus:ring-0" placeholder="Scan or enter SKU..." type="text"/>
+<button class="w-12 h-12 flex items-center justify-center bg-surface-container-high rounded-xl border border-outline-variant hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-on-surface">barcode_scanner</span>
+</button>
+</div>
+</div>
+<!-- Itemized List -->
+<div class="flex-1 overflow-y-auto">
+<!-- Table Header -->
+<div class="flex px-lg py-sm bg-surface-container-low border-b border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase">
+<div class="flex-1">Item</div>
+<div class="w-20 text-center">Qty</div>
+<div class="w-24 text-right">Price</div>
+</div>
+<!-- Table Body -->
+<div class="flex flex-col">
+<!-- Row 1 -->
+<div class="flex items-center px-lg py-sm border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors cursor-pointer group">
+<div class="flex-1 flex flex-col justify-center min-w-0 pr-sm">
+<span class="font-mono-data text-mono-data text-on-surface truncate group-hover:text-primary transition-colors">Premium Exterior Acrylic</span>
+<span class="text-[12px] text-secondary truncate">SKU: 84920-EXT-4L</span>
+</div>
+<div class="w-20 flex items-center justify-center gap-xs">
+<button class="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-[16px]">remove</span></button>
+<span class="font-mono-data text-mono-data w-4 text-center">2</span>
+<button class="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-[16px]">add</span></button>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface pl-sm">$118.00</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center px-lg py-sm border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors cursor-pointer bg-primary-fixed-dim bg-opacity-10 group relative">
+<div class="w-1 h-full bg-primary absolute left-0"></div>
+<div class="flex-1 flex flex-col justify-center min-w-0 pr-sm">
+<span class="font-mono-data text-mono-data text-on-surface truncate group-hover:text-primary transition-colors">Custom Tint (Ocean Mist)</span>
+<span class="text-[12px] text-secondary truncate">Formula: RGB 145,190,210</span>
+</div>
+<div class="w-20 flex items-center justify-center gap-xs">
+<span class="font-mono-data text-mono-data text-secondary">1</span>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface pl-sm">$15.50</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center px-lg py-sm border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors cursor-pointer group">
+<div class="flex-1 flex flex-col justify-center min-w-0 pr-sm">
+<span class="font-mono-data text-mono-data text-on-surface truncate group-hover:text-primary transition-colors">Pro Roller Set 9"</span>
+<span class="text-[12px] text-secondary truncate">SKU: 11200-RLL</span>
+</div>
+<div class="w-20 flex items-center justify-center gap-xs">
+<button class="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-[16px]">remove</span></button>
+<span class="font-mono-data text-mono-data w-4 text-center">1</span>
+<button class="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-[16px]">add</span></button>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface pl-sm">$24.95</div>
+</div>
+</div>
+</div>
+<!-- Checkout Totals & Actions -->
+<div class="p-lg bg-surface border-t border-outline-variant mt-auto">
+<div class="flex justify-between items-center mb-xs">
+<span class="font-body-md text-body-md text-secondary">Subtotal</span>
+<span class="font-mono-data text-mono-data text-on-surface">$158.45</span>
+</div>
+<div class="flex justify-between items-center mb-md pb-md border-b border-outline-variant">
+<span class="font-body-md text-body-md text-secondary">Tax (8%)</span>
+<span class="font-mono-data text-mono-data text-on-surface">$12.68</span>
+</div>
+<div class="flex justify-between items-center mb-lg">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Total</span>
+<span class="font-display-lg text-display-lg text-primary font-extrabold">$171.13</span>
+</div>
+<!-- Split Payment Options -->
+<div class="grid grid-cols-2 gap-sm mb-md">
+<button class="h-12 border border-outline-variant bg-surface-container-lowest text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">payments</span> Cash
+                        </button>
+<button class="h-12 border border-outline-variant bg-surface-container-lowest text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">credit_card</span> Card
+                        </button>
+</div>
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-headline-sm text-headline-sm shadow-md hover:bg-primary-container hover:text-on-primary-container transition-colors flex items-center justify-center gap-sm">
+                        Complete Sale <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Panel 2: Paint Tinting & Mixing Module -->
+<section class="flex-1 h-full flex flex-col overflow-y-auto bg-surface p-lg gap-lg">
+<div class="flex justify-between items-end border-b border-outline-variant pb-md">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface font-semibold">Tinting Desk</h1>
+<p class="font-body-md text-body-md text-secondary mt-xs">Formula active for: <span class="font-medium text-on-surface">Premium Exterior Acrylic</span></p>
+</div>
+<div class="flex gap-sm">
+<button class="h-10 px-md border border-outline-variant bg-surface-container-lowest text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">bookmark</span> Save Formula
+                        </button>
+<button class="h-10 px-md bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:bg-opacity-90 transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">blender</span> Initialize Mixer
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-lg flex-1 min-h-0">
+<!-- Color Selection Area -->
+<div class="flex flex-col gap-lg min-h-0">
+<!-- Card: Base Paint Selector -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-sm">Base Selection</label>
+<div class="flex gap-sm">
+<button class="flex-1 h-12 border border-outline-variant rounded-xl flex items-center justify-center font-label-md text-label-md hover:bg-surface-container transition-colors text-on-surface">1L Base</button>
+<button class="flex-1 h-12 border-2 border-primary bg-primary-fixed-dim bg-opacity-20 rounded-xl flex items-center justify-center font-label-md text-label-md text-primary font-bold shadow-sm">4L Base</button>
+<button class="flex-1 h-12 border border-outline-variant rounded-xl flex items-center justify-center font-label-md text-label-md hover:bg-surface-container transition-colors text-on-surface">20L Drum</button>
+</div>
+</div>
+<!-- Card: Color Picker (Bento style) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm flex-1 flex flex-col min-h-[320px]">
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-md">Color Selection</label>
+<div class="flex flex-col md:flex-row gap-lg h-full">
+<!-- Simulated Color Wheel Area -->
+<div class="w-full md:w-48 shrink-0 flex flex-col items-center justify-center relative">
+<div class="w-40 h-40 rounded-full border-4 border-surface-container-high bg-[conic-gradient(red,yellow,lime,aqua,blue,magenta,red)] shadow-sm relative cursor-crosshair">
+<!-- Reticle -->
+<div class="absolute top-1/4 left-3/4 w-4 h-4 rounded-full border-2 border-white shadow-md bg-transparent -translate-x-1/2 -translate-y-1/2"></div>
+</div>
+<!-- Real-view Swatch -->
+<div class="mt-lg w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-sm flex items-center gap-sm shadow-sm">
+<div class="w-10 h-10 rounded-lg border border-outline-variant bg-[#91BED2] shadow-inner shrink-0"></div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate">Ocean Mist</span>
+<span class="font-mono-data text-mono-data text-secondary text-[12px] uppercase">#91BED2</span>
+</div>
+</div>
+</div>
+<!-- Input Fields -->
+<div class="flex-1 flex flex-col gap-sm justify-center md:border-l md:border-outline-variant md:pl-lg">
+<div class="flex border border-outline-variant rounded-xl overflow-hidden h-10 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<div class="w-16 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">HEX</div>
+<input class="flex-1 px-sm bg-surface-container-lowest border-none font-mono-data text-mono-data focus:ring-0 uppercase" type="text" value="91BED2"/>
+</div>
+<div class="flex border border-outline-variant rounded-xl overflow-hidden h-10 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<div class="w-16 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">R</div>
+<input class="flex-1 px-sm bg-surface-container-lowest border-none font-mono-data text-mono-data focus:ring-0" type="number" value="145"/>
+</div>
+<div class="flex border border-outline-variant rounded-xl overflow-hidden h-10 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<div class="w-16 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">G</div>
+<input class="flex-1 px-sm bg-surface-container-lowest border-none font-mono-data text-mono-data focus:ring-0" type="number" value="190"/>
+</div>
+<div class="flex border border-outline-variant rounded-xl overflow-hidden h-10 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<div class="w-16 bg-surface-container flex items-center justify-center font-label-md text-label-md text-on-surface-variant border-r border-outline-variant">B</div>
+<input class="flex-1 px-sm bg-surface-container-lowest border-none font-mono-data text-mono-data focus:ring-0" type="number" value="210"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Formula Breakdown Area -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col shadow-sm overflow-hidden h-full">
+<div class="p-md bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Pigment Formula (4L Base)</label>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold bg-surface-variant px-sm py-xs rounded-lg">Vol: 114.5 ml</span>
+</div>
+<!-- Data Table (Compact Density) -->
+<div class="flex-1 overflow-y-auto">
+<!-- Table Header -->
+<div class="flex px-md py-sm bg-surface-container border-b border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase">
+<div class="w-12">ID</div>
+<div class="flex-1">Pigment Name</div>
+<div class="w-24 text-right">Shots (Y)</div>
+<div class="w-28 text-right">Volume (ml)</div>
+</div>
+<!-- Rows -->
+<div class="flex flex-col">
+<div class="flex items-center px-md h-12 border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors">
+<div class="w-12 font-mono-data text-mono-data text-secondary">B</div>
+<div class="flex-1 flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-[#000000] border border-outline-variant shadow-sm"></div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Lamp Black</span>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface">1.25</div>
+<div class="w-28 text-right font-mono-data text-mono-data text-on-surface font-semibold">12.0 ml</div>
+</div>
+<div class="flex items-center px-md h-12 border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors">
+<div class="w-12 font-mono-data text-mono-data text-secondary">C</div>
+<div class="flex-1 flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-[#E5D040] border border-outline-variant shadow-sm"></div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Yellow Oxide</span>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface">0.50</div>
+<div class="w-28 text-right font-mono-data text-mono-data text-on-surface font-semibold">4.8 ml</div>
+</div>
+<div class="flex items-center px-md h-12 border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors bg-primary-fixed-dim bg-opacity-5">
+<div class="w-12 font-mono-data text-mono-data text-secondary">E</div>
+<div class="flex-1 flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-[#0055A4] border border-outline-variant shadow-sm"></div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Phthalo Blue</span>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface">8.50</div>
+<div class="w-28 text-right font-mono-data text-mono-data text-primary font-bold">81.6 ml</div>
+</div>
+<div class="flex items-center px-md h-12 border-b border-outline-variant border-opacity-50 hover:bg-surface-container-lowest transition-colors">
+<div class="w-12 font-mono-data text-mono-data text-secondary">KX</div>
+<div class="flex-1 flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-[#FFFFFF] border border-outline-variant shadow-sm"></div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Titanium White</span>
+</div>
+<div class="w-24 text-right font-mono-data text-mono-data text-on-surface">1.67</div>
+<div class="w-28 text-right font-mono-data text-mono-data text-on-surface font-semibold">16.1 ml</div>
+</div>
+</div>
+</div>
+<!-- Warnings / Info -->
+<div class="p-md bg-surface border-t border-outline-variant mt-auto">
+<div class="flex items-start gap-sm bg-[#FFF1F0] p-md rounded-xl border border-[#FFA39E]">
+<span class="material-symbols-outlined text-[#CF1322] text-[24px]">info</span>
+<div>
+<h4 class="font-label-md text-label-md text-[#A8071A] font-bold">Can Capacity Warning</h4>
+<p class="font-body-md text-[13px] text-[#CF1322] mt-xs">Total pigment volume (114.5 ml) approaches maximum fill line for 4L base can. Ensure careful mixing to avoid overflow.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

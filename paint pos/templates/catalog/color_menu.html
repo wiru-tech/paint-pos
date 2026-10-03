@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Color Menu - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1400px] mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-sm mb-md">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Color Menu</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5 text-[13px]">Pre-approved shade cards — pick one and mix it at the Tinting Desk in one click.</p>
+        </div>
+        <div class="flex items-center border border-outline-variant rounded-lg overflow-hidden h-8 w-fit">
+            <button type="button" id="color-menu-grid-btn" class="h-full px-sm flex items-center gap-1 bg-primary text-on-primary font-label-md text-label-md transition-colors">
+                <span class="material-symbols-outlined text-[15px]">grid_view</span> Grid
+            </button>
+            <button type="button" id="color-menu-list-btn" class="h-full px-sm flex items-center gap-1 text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md transition-colors">
+                <span class="material-symbols-outlined text-[15px]">view_list</span> List
+            </button>
+        </div>
+    </div>
+
+    <form method="get" class="flex flex-wrap items-center gap-xs mb-md">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search by color name or code..." onchange="this.form.submit()"
+               class="h-7 px-sm py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px] w-52"/>
+        <select name="brand" onchange="this.form.submit()" class="h-7 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+            <option value="">All Brands</option>
+            {% for b in brands %}<option value="{{ b.id }}" {% if brand_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+        </select>
+        <select name="finish" onchange="this.form.submit()" class="h-7 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+            <option value="">All Finishes</option>
+            {% for f in finish_choices %}<option value="{{ f }}" {% if finish == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+        </select>
+        <select name="base_type" onchange="this.form.submit()" class="h-7 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+            <option value="">All Base Types</option>
+            {% for bt in base_types %}<option value="{{ bt }}" {% if base_type == bt %}selected{% endif %}>{{ bt }}</option>{% endfor %}
+        </select>
+        {% if has_filters %}
+        <a href="{% url 'catalog:color_menu' %}" class="text-on-surface-variant font-label-md text-[12px] font-medium hover:text-primary transition-colors">Clear All</a>
+        {% endif %}
+    </form>
+
+    <div id="color-menu-grid">
+        {% for section in sections %}
+        <div class="mb-lg">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface mb-sm">{{ section.label }}</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-sm">
+                {% for shade in section.shades %}
+                <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col hover-lift">
+                    <div class="h-20 w-full" style="background-color: {{ shade.hex_color }};"></div>
+                    <div class="p-sm flex flex-col gap-0.5 flex-1">
+                        <div class="font-body-md text-[13px] font-medium text-on-surface truncate">{{ shade.name }}</div>
+                        <div class="font-mono-data text-[11px] text-secondary uppercase">{{ shade.code|default:shade.hex_color }}</div>
+                        <div class="font-body-md text-[11px] text-secondary truncate mt-0.5">{{ shade.base_product.base_type|default:shade.base_product.name }}</div>
+                        {% if shade.finish %}<div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">{{ shade.finish }}</div>{% endif %}
+                        <div class="mt-sm flex gap-1">
+                            <a href="{% url 'sales:desk' %}?product_id={{ shade.base_product_id }}&hex={{ shade.hex_color|cut:'#' }}&base_size={{ shade.base_size }}&name={{ shade.name|urlencode }}&finish={{ shade.finish|urlencode }}&shade_id={{ shade.id }}&tint=1"
+                               class="flex-1 h-8 rounded-md border border-outline-variant text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors flex items-center justify-center gap-1 font-label-md text-label-md" title="Open at the Tinting Desk">
+                                <span class="material-symbols-outlined text-[14px]">science</span> Mix
+                            </a>
+                            <button type="button" data-action="quick-add-shade" data-shade-id="{{ shade.id }}"
+                                    class="flex-1 h-8 rounded-md bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">add_shopping_cart</span> Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm p-xl text-center text-secondary font-body-md">
+            No catalog shades match these filters yet.
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="color-menu-toast" class="hidden fixed bottom-6 right-6 z-[200] px-md py-sm rounded-lg shadow-md font-label-md text-label-md text-white"></div>
+
+    <div id="color-menu-list" class="hidden bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-surface-container-lowest border-b border-outline-variant">
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Color</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Name</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Code</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Category</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Base Type</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Finish</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody class="font-body-md text-[13px] text-on-surface">
+                {% for shade in shades %}
+                <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors h-11">
+                    <td class="px-3 py-1.5"><div class="w-6 h-6 rounded-md border border-outline-variant shadow-inner" style="background-color: {{ shade.hex_color }};"></div></td>
+                    <td class="px-3 py-1.5 font-medium">{{ shade.name }}</td>
+                    <td class="px-3 py-1.5 font-mono-data text-[12px] text-secondary uppercase">{{ shade.code|default:shade.hex_color }}</td>
+                    <td class="px-3 py-1.5 text-secondary text-[12px]">{{ shade.get_shade_category_display|default:"—" }}</td>
+                    <td class="px-3 py-1.5 text-secondary text-[12px]">{{ shade.base_product.base_type|default:shade.base_product.name }}</td>
+                    <td class="px-3 py-1.5 text-secondary text-[12px]">{{ shade.finish|default:"—" }}</td>
+                    <td class="px-3 py-1.5 text-center whitespace-nowrap">
+                        <a href="{% url 'sales:desk' %}?product_id={{ shade.base_product_id }}&hex={{ shade.hex_color|cut:'#' }}&base_size={{ shade.base_size }}&name={{ shade.name|urlencode }}&finish={{ shade.finish|urlencode }}&shade_id={{ shade.id }}&tint=1"
+                           class="h-7 px-sm rounded-md border border-outline-variant text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center gap-1 font-label-md text-label-md" title="Open at the Tinting Desk">
+                            <span class="material-symbols-outlined text-[14px]">science</span> Mix
+                        </a>
+                        <button type="button" data-action="quick-add-shade" data-shade-id="{{ shade.id }}"
+                                class="h-7 px-sm rounded-md bg-primary text-on-primary hover:bg-primary-container transition-colors inline-flex items-center gap-1 font-label-md text-label-md">
+                            <span class="material-symbols-outlined text-[14px]">add_shopping_cart</span> Add
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="px-3 py-8 text-center text-secondary font-body-md">No catalog shades match these filters yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+(function () {
+    const gridBtn = document.getElementById('color-menu-grid-btn');
+    const listBtn = document.getElementById('color-menu-list-btn');
+    const grid = document.getElementById('color-menu-grid');
+    const list = document.getElementById('color-menu-list');
+    const activeCls = ['bg-primary', 'text-on-primary'];
+    const inactiveCls = ['text-on-surface-variant'];
+    function showGrid() {
+        grid.classList.remove('hidden');
+        list.classList.add('hidden');
+        gridBtn.classList.add(...activeCls);
+        listBtn.classList.remove(...activeCls);
+    }
+    function showList() {
+        list.classList.remove('hidden');
+        grid.classList.add('hidden');
+        listBtn.classList.add(...activeCls);
+        gridBtn.classList.remove(...activeCls);
+    }
+    gridBtn.addEventListener('click', showGrid);
+    listBtn.addEventListener('click', showList);
+
+    // ---------- Quick "Add to Cart" — skip the Tinting Desk entirely ----------
+    const toast = document.getElementById('color-menu-toast');
+    function showToast(message, ok) {
+        toast.textContent = message;
+        toast.classList.remove('hidden', 'bg-emerald-600', 'bg-error');
+        toast.classList.add(ok ? 'bg-emerald-600' : 'bg-error');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
+    }
+
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-action="quick-add-shade"]');
+        if (!btn) return;
+        btn.disabled = true;
+        const originalHtml = btn.innerHTML;
+        try {
+            const data = await chromaposFetchJSON("{% url 'sales:tint_add' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ shade_id: btn.dataset.shadeId }),
+            });
+            if (data.success) {
+                btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">check</span> Added';
+                showToast('Added to cart.', true);
+                setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1200);
+            } else {
+                showToast(data.error || 'Could not add that color.', false);
+                btn.disabled = false;
+            }
+        } catch (err) {
+            showToast(err.message || 'Could not add that color.', false);
+            btn.disabled = false;
+        }
+    });
+})();
+</script>
+{% endblock %}

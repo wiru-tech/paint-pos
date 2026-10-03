@@ -1,0 +1,16 @@
+ChromaPOS — {{ sale.branch.name }}
+Receipt {{ sale.invoice_number }}
+{{ sale.completed_at|date:"M d, Y H:i" }}
+{% if sale.customer and sale.customer.is_regular %}Customer: {{ sale.customer.name }} (Regular){% if sale.customer.phone %} — {{ sale.customer.phone }}{% endif %}{% elif sale.customer %}Customer: {{ sale.customer.name }} (Walk-in){% else %}Customer: Walk-in{% endif %}
+
+{% for item in sale.items.all %}{{ item.quantity|floatformat:0 }} x {{ item.description }} — ${{ item.line_total|floatformat:2 }}
+{% endfor %}
+Subtotal: ${{ sale.subtotal|floatformat:2 }}
+Tax:      ${{ sale.tax|floatformat:2 }}
+Total:    ${{ sale.total|floatformat:2 }}
+
+{% for payment in sale.payments.all %}{{ payment.get_method_display }}: ${{ payment.amount|floatformat:2 }}{% if payment.change_due %} (change ${{ payment.change_due|floatformat:2 }}){% endif %}
+{% endfor %}
+{% if sale.customer %}Thanks, {{ sale.customer.name }}! You now have {{ sale.customer.loyalty_points }} loyalty point(s) and ${{ sale.customer.store_credit|floatformat:2 }} store credit.{% endif %}
+
+Served by {{ sale.cashier.username }}.

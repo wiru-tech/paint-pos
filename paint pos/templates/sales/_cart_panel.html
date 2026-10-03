@@ -1,0 +1,245 @@
+{% load humanize %}
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+    <div class="p-lg border-b border-outline-variant bg-surface flex flex-col gap-sm">
+        <div id="customer-area" data-attach-url="{% url 'sales:attach_customer' %}" data-search-url="{% url 'sales:customer_search' %}" data-walkin-url="{% url 'sales:attach_walkin' %}">
+            {% if sale.customer %}
+            <div class="flex items-center justify-between gap-sm px-sm py-2 rounded-xl {% if sale.customer.is_walkin %}bg-surface-container-high border border-outline-variant{% else %}bg-primary-fixed/40 border border-primary-fixed-dim{% endif %}">
+                <div class="flex items-center gap-sm min-w-0">
+                    <span class="material-symbols-outlined {% if sale.customer.is_walkin %}text-secondary{% else %}text-primary{% endif %} text-[18px] shrink-0">{% if sale.customer.is_walkin %}directions_walk{% else %}person{% endif %}</span>
+                    <div class="min-w-0">
+                        <div class="font-body-md text-[13px] text-on-surface font-medium truncate flex items-center gap-xs">
+                            {{ sale.customer.name }}
+                            {% if sale.customer.is_walkin %}<span class="bg-surface-variant text-on-surface-variant text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">Walk-in</span>{% endif %}
+                        </div>
+                        <div class="font-mono-data text-[11px] text-secondary">
+                            {% if sale.customer.is_walkin %}Name only — no loyalty account{% else %}{{ sale.customer.loyalty_points }} pts &middot; ${{ store_credit|floatformat:2|intcomma }} credit{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <button type="button" data-action="detach-customer" class="w-7 h-7 rounded-full hover:bg-surface-container-lowest flex items-center justify-center text-secondary shrink-0" title="Remove customer">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+            </div>
+            {% else %}
+            <div class="flex gap-sm">
+                <div class="relative flex-1">
+                    <input id="customer-search-input" autocomplete="off" placeholder="Attach a regular customer (optional)…"
+                           class="w-full h-10 px-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-body-md text-[13px] focus:ring-0"/>
+                    <div id="customer-search-results" class="hidden absolute top-full left-0 right-0 mt-xs bg-surface-container-lowest rounded-xl shadow-md overflow-hidden z-30 max-h-56 overflow-y-auto"></div>
+                </div>
+                <button type="button" data-action="show-walkin" class="h-10 px-sm rounded-xl border border-outline-variant bg-surface-container-lowest font-label-md text-[12px] text-on-surface hover:bg-surface-container transition-colors flex items-center gap-xs shrink-0" title="Record a name-only walk-in customer">
+                    <span class="material-symbols-outlined text-[16px]">directions_walk</span> Walk-in
+                </button>
+            </div>
+            <div id="walkin-form" class="hidden mt-xs flex gap-sm">
+                <input id="walkin-name" autocomplete="off" placeholder="Walk-in name (that's all we need)…"
+                       class="flex-1 h-10 px-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-body-md text-[13px] focus:ring-0"/>
+                <button type="button" data-action="save-walkin" class="h-10 px-md rounded-xl bg-primary text-on-primary font-label-md text-[12px] hover:bg-primary-container transition-colors shrink-0">Add</button>
+            </div>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-sm">
+            <div class="flex-1">
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">BARCODE SCANNER</label>
+                <div class="flex gap-sm">
+                    <input id="scanner-input" autofocus class="flex-1 h-12 px-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-mono-data text-mono-data focus:ring-0" placeholder="Scan or type SKU, press Enter..." type="text" autocomplete="off"/>
+                    <button type="button" data-action="scan-add" class="w-12 h-12 flex items-center justify-center bg-surface-container-high rounded-xl border border-outline-variant hover:bg-surface-variant transition-colors shrink-0">
+                        <span class="material-symbols-outlined text-on-surface">barcode_scanner</span>
+                    </button>
+                </div>
+            </div>
+            <button type="button" data-action="open-tinting" class="h-12 px-md rounded-xl bg-primary-fixed text-primary font-label-md text-label-md flex items-center gap-xs hover:bg-primary-fixed-dim transition-colors shrink-0 self-end">
+                <span class="material-symbols-outlined text-[18px]">palette</span> Custom Tint
+            </button>
+        </div>
+        <div id="scanner-suggestions" class="flex flex-col gap-1 empty:hidden"></div>
+        <div id="cart-error" class="text-[13px] text-error font-body-md empty:hidden"></div>
+    </div>
+
+    <div class="max-h-[38vh] overflow-y-auto">
+        {% if has_items %}
+        <div class="flex px-lg py-sm bg-surface-container-low border-b border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase sticky top-0">
+            <div class="flex-1">Item</div>
+            <div class="w-20 text-center">Qty</div>
+            <div class="w-24 text-right">Price</div>
+        </div>
+        {% endif %}
+        <div class="flex flex-col">
+            {% for item in items %}
+            <div class="border-b border-outline-variant border-opacity-50 {% if item.color_formula %}bg-primary-fixed bg-opacity-10{% endif %}">
+            <div class="flex items-center px-lg py-sm hover:bg-surface-container-low transition-colors group relative">
+                {% if item.color_formula %}<div class="w-1 h-full bg-primary absolute left-0 top-0"></div>{% endif %}
+                <div class="flex-1 flex flex-col justify-center min-w-0 pr-sm">
+                    <span class="font-mono-data text-mono-data text-on-surface truncate">{{ item.description }}</span>
+                    {% if item.color_formula %}
+                    <span class="text-[12px] text-secondary truncate flex items-center gap-1">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full border border-outline-variant shrink-0" style="background-color: {{ item.color_formula.hex_color }};"></span>
+                        RGB {{ item.color_formula.r }},{{ item.color_formula.g }},{{ item.color_formula.b }}
+                    </span>
+                    {% elif item.product %}
+                    <span class="text-[12px] text-secondary truncate">SKU: {{ item.product.sku }}</span>
+                    {% endif %}
+                    {% if item.has_discount %}
+                    <span class="text-[11px] text-tertiary font-medium truncate flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px]">sell</span>
+                        {{ item.discount_label }} · &minus;${{ item.discount_amount|floatformat:2|intcomma }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="w-20 flex items-center justify-center gap-xs">
+                    <button type="button" data-action="qty" data-item-id="{{ item.id }}" data-delta="-1" class="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors">
+                        <span class="material-symbols-outlined text-[16px]">remove</span>
+                    </button>
+                    <span class="font-mono-data text-mono-data w-6 text-center">{{ item.quantity|floatformat:0 }}</span>
+                    <button type="button" data-action="qty" data-item-id="{{ item.id }}" data-delta="1" class="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors">
+                        <span class="material-symbols-outlined text-[16px]">add</span>
+                    </button>
+                </div>
+                <div class="w-24 text-right pl-sm">
+                    {% if item.has_discount %}<div class="font-mono-data text-[11px] text-secondary line-through">${{ item.gross_total|floatformat:2|intcomma }}</div>{% endif %}
+                    <div class="font-mono-data text-mono-data text-on-surface">${{ item.line_total|floatformat:2|intcomma }}</div>
+                </div>
+                <button type="button" data-action="toggle-item-discount" data-item-id="{{ item.id }}"
+                        class="ml-xs w-7 h-7 shrink-0 flex items-center justify-center rounded-full border border-outline-variant {% if item.has_discount %}bg-tertiary-fixed text-on-tertiary-fixed-variant{% else %}bg-surface-container text-on-surface-variant{% endif %} hover:bg-surface-variant transition-colors"
+                        title="Discount this line">
+                    <span class="material-symbols-outlined text-[15px]">sell</span>
+                </button>
+                <button type="button" data-action="remove" data-item-id="{{ item.id }}" class="absolute right-1 -top-1 w-5 h-5 rounded-full bg-error text-on-error opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity" title="Remove">
+                    <span class="material-symbols-outlined text-[13px]">close</span>
+                </button>
+            </div>
+            <div id="item-discount-{{ item.id }}" data-item-discount="{{ item.id }}"
+                 class="{% if not item.has_discount %}hidden {% endif %}px-lg pb-sm flex flex-wrap items-center gap-xs">
+                <select data-role="item-discount-type" class="h-8 pl-sm pr-6 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+                    <option value="percent" {% if item.discount_type == "percent" %}selected{% endif %}>% off</option>
+                    <option value="amount" {% if item.discount_type == "amount" %}selected{% endif %}>$ off</option>
+                </select>
+                <input type="number" step="0.01" min="0" data-role="item-discount-value"
+                       value="{% if item.has_discount %}{{ item.discount_value|floatformat:'-2' }}{% endif %}" placeholder="0"
+                       class="h-8 w-20 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-mono-data text-[12px]"/>
+                <button type="button" data-action="apply-item-discount" data-item-id="{{ item.id }}"
+                        class="h-8 px-sm rounded-lg bg-primary text-on-primary font-label-md text-[12px] hover:bg-primary-container transition-colors">Apply</button>
+                {% if item.has_discount %}
+                <button type="button" data-action="clear-item-discount" data-item-id="{{ item.id }}"
+                        class="h-8 px-sm rounded-lg border border-outline-variant font-label-md text-[12px] text-secondary hover:bg-surface-container transition-colors">Clear</button>
+                {% endif %}
+            </div>
+            </div>
+            {% empty %}
+            <div class="px-lg py-xl text-center text-secondary font-body-md text-body-md">
+                <span class="material-symbols-outlined text-[32px] text-outline-variant block mb-xs">shopping_cart</span>
+                Cart is empty — scan a SKU or add a custom tint.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="p-lg bg-surface border-t border-outline-variant" id="totals-area" data-discount-url="{% url 'sales:cart_discount' %}">
+        <div class="flex justify-between items-center mb-xs">
+            <span class="font-body-md text-body-md text-secondary">Subtotal</span>
+            <span class="font-mono-data text-mono-data text-on-surface">${{ gross_subtotal|floatformat:2|intcomma }}</span>
+        </div>
+        {% if item_discount_total %}
+        <div class="flex justify-between items-center mb-xs">
+            <span class="font-body-md text-body-md text-tertiary">Line discounts</span>
+            <span class="font-mono-data text-mono-data text-tertiary">&minus;${{ item_discount_total|floatformat:2|intcomma }}</span>
+        </div>
+        {% endif %}
+        {% if sale.discount_amount %}
+        <div class="flex justify-between items-center mb-xs">
+            <span class="font-body-md text-body-md text-tertiary flex items-center gap-xs">
+                Order discount ({{ sale.discount_label }})
+                <button type="button" data-action="clear-order-discount" class="w-5 h-5 rounded-full hover:bg-surface-container-high flex items-center justify-center text-secondary" title="Remove order discount">
+                    <span class="material-symbols-outlined text-[13px]">close</span>
+                </button>
+            </span>
+            <span class="font-mono-data text-mono-data text-tertiary">&minus;${{ sale.discount_amount|floatformat:2|intcomma }}</span>
+        </div>
+        {% if sale.discount_reason %}
+        <p class="font-body-md text-[11px] text-secondary mb-xs -mt-0.5">Reason: {{ sale.discount_reason }}</p>
+        {% endif %}
+        {% endif %}
+        {% if total_discount %}
+        <div class="flex justify-between items-center mb-xs">
+            <span class="font-body-md text-body-md text-secondary">After discount</span>
+            <span class="font-mono-data text-mono-data text-on-surface">${{ sale.subtotal|floatformat:2|intcomma }}</span>
+        </div>
+        {% endif %}
+        <div class="flex justify-between items-center mb-sm pb-md border-b border-outline-variant">
+            <span class="font-body-md text-body-md text-secondary">Tax (8%)</span>
+            <span class="font-mono-data text-mono-data text-on-surface">${{ sale.tax|floatformat:2|intcomma }}</span>
+        </div>
+
+        {% if has_items %}
+        <div class="mb-sm">
+            <button type="button" data-action="toggle-order-discount" class="h-8 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest font-label-md text-[12px] text-on-surface hover:bg-surface-container transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[15px]">percent</span>
+                {% if sale.discount_amount %}Edit order discount{% else %}Add order discount{% endif %}
+            </button>
+            <div id="order-discount-form" class="hidden mt-sm p-sm rounded-xl border border-outline-variant bg-surface-container-low flex flex-col gap-xs">
+                <div class="flex flex-wrap items-center gap-xs">
+                    <select id="order-discount-type" class="h-9 pl-sm pr-6 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+                        <option value="percent" {% if sale.discount_type == "percent" %}selected{% endif %}>% off</option>
+                        <option value="amount" {% if sale.discount_type == "amount" %}selected{% endif %}>$ off</option>
+                    </select>
+                    <input id="order-discount-value" type="number" step="0.01" min="0" placeholder="0"
+                           value="{% if sale.discount_amount %}{{ sale.discount_value|floatformat:'-2' }}{% endif %}"
+                           class="h-9 w-24 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-mono-data text-[12px]"/>
+                    <input id="order-discount-reason" type="text" placeholder="Reason (optional)" value="{{ sale.discount_reason }}"
+                           class="h-9 flex-1 min-w-[8rem] px-sm rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[12px]"/>
+                    <button type="button" data-action="apply-order-discount" class="h-9 px-md rounded-lg bg-primary text-on-primary font-label-md text-[12px] hover:bg-primary-container transition-colors">Apply</button>
+                </div>
+                <div class="flex flex-wrap gap-xs">
+                    <button type="button" data-action="quick-discount" data-percent="5" class="h-7 px-sm rounded-full border border-outline-variant font-mono-data text-[11px] text-secondary hover:bg-surface-container transition-colors">5%</button>
+                    <button type="button" data-action="quick-discount" data-percent="10" class="h-7 px-sm rounded-full border border-outline-variant font-mono-data text-[11px] text-secondary hover:bg-surface-container transition-colors">10%</button>
+                    <button type="button" data-action="quick-discount" data-percent="15" class="h-7 px-sm rounded-full border border-outline-variant font-mono-data text-[11px] text-secondary hover:bg-surface-container transition-colors">15%</button>
+                    <button type="button" data-action="quick-discount" data-percent="20" class="h-7 px-sm rounded-full border border-outline-variant font-mono-data text-[11px] text-secondary hover:bg-surface-container transition-colors">20%</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="flex justify-between items-center mb-lg">
+            <span class="font-headline-sm text-headline-sm font-bold text-on-surface">Total</span>
+            <span class="font-display-lg text-display-lg text-primary font-extrabold">${{ sale.total|floatformat:2|intcomma }}</span>
+        </div>
+
+        {% if has_items %}
+        <div id="payment-area" data-balance="{{ balance_due }}">
+            <div class="flex gap-sm mb-md">
+                <button type="button" data-action="show-payment" data-method="cash" class="flex-1 h-12 border border-outline-variant bg-surface-container-lowest text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center justify-center gap-xs">
+                    <span class="material-symbols-outlined text-[18px]">payments</span> Cash
+                </button>
+                <button type="button" data-action="show-payment" data-method="card" class="flex-1 h-12 border border-outline-variant bg-surface-container-lowest text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center justify-center gap-xs">
+                    <span class="material-symbols-outlined text-[18px]">credit_card</span> Card
+                </button>
+                {% if sale.customer and store_credit > 0 %}
+                <button type="button" data-action="pay" data-method="credit" class="flex-1 h-12 border border-tertiary bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-xl font-label-md text-label-md hover:bg-tertiary-fixed-dim transition-colors flex items-center justify-center gap-xs" title="Applies up to ${{ store_credit|floatformat:2 }} in store credit">
+                    <span class="material-symbols-outlined text-[18px]">redeem</span> Credit
+                </button>
+                {% endif %}
+            </div>
+
+            <div id="cash-payment-form" class="hidden mb-md p-md rounded-xl border border-outline-variant bg-surface-container-low flex flex-col gap-sm">
+                <label class="font-label-md text-label-md text-on-surface-variant">AMOUNT TENDERED</label>
+                <input id="cash-tendered" type="number" step="0.01" min="0" class="w-full h-11 px-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-mono-data text-mono-data" placeholder="0.00"/>
+                <button type="button" data-action="pay" data-method="cash" class="w-full h-11 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Confirm Cash Payment</button>
+            </div>
+
+            <div id="card-payment-form" class="hidden mb-md p-md rounded-xl border border-outline-variant bg-surface-container-low flex flex-col gap-sm">
+                <label class="font-label-md text-label-md text-on-surface-variant">CARD AMOUNT (defaults to balance due)</label>
+                <input id="card-amount" type="number" step="0.01" min="0" class="w-full h-11 px-sm rounded-xl bg-surface-container-lowest border border-outline-variant pos-input font-mono-data text-mono-data" placeholder="{{ balance_due|floatformat:2 }}"/>
+                <button type="button" data-action="pay" data-method="card" class="w-full h-11 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Confirm Card Payment</button>
+            </div>
+
+            {% if balance_due < sale.total %}
+            <p class="text-[13px] text-secondary mb-sm">Remaining balance: <span class="font-mono-data text-on-surface font-semibold">${{ balance_due|floatformat:2|intcomma }}</span></p>
+            {% endif %}
+        </div>
+        {% else %}
+        <button type="button" disabled class="w-full h-14 bg-surface-container-high text-secondary rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-sm cursor-not-allowed">
+            Complete Sale <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}Inventory - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1400px] mx-auto">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-sm mb-md">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Multi-Branch Inventory</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5">Live tracking across all locations.</p>
+        </div>
+        <div class="flex gap-xs">
+            <a href="{% url 'inventory:transfer_list' %}" class="h-8 px-sm border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[15px]">swap_horiz</span> Transfers
+            </a>
+            {% if is_manager %}
+            <a href="{% url 'inventory:adjustments' %}" class="h-8 px-sm border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[15px]">edit_note</span> Adjustments
+            </a>
+            <a href="{% url 'inventory:purchase_orders' %}" class="h-8 px-sm border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[15px]">local_shipping</span> Purchase Orders
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
+        {% for link in status_links %}
+        <a href="?{{ link.qs }}"
+           class="text-left bg-surface-container-lowest rounded-lg p-sm shadow-sm border transition-colors
+           {% if link.active %}border-primary ring-1 ring-primary{% else %}border-transparent hover:border-outline-variant{% endif %}">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">{{ link.label }}</span>
+                {% if link.value == "in_stock" %}
+                <span class="material-symbols-outlined text-emerald-500 text-[15px]">check_circle</span>
+                {% elif link.value == "low" %}
+                <span class="material-symbols-outlined text-amber-500 text-[15px]">warning</span>
+                {% elif link.value == "out" %}
+                <span class="material-symbols-outlined text-error text-[15px]">production_quantity_limits</span>
+                {% else %}
+                <span class="material-symbols-outlined text-primary text-[15px]">inventory_2</span>
+                {% endif %}
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ link.count }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">{% if link.value %}of {{ summary.total }} products{% else %}matching current filters{% endif %}</p>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-xs mb-xs">
+        <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider mr-0.5">Branches</span>
+        {% for link in branch_links %}
+        <a href="?{{ link.qs }}"
+           class="h-7 px-sm rounded-full font-label-md text-[11px] font-medium flex items-center gap-1 border transition-colors
+           {% if link.active %}bg-primary text-on-primary border-primary{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low{% endif %}">
+            <span class="material-symbols-outlined text-[13px]" data-weight="fill">location_on</span>
+            {{ link.branch.name }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <form method="get" class="flex flex-wrap items-center gap-xs mb-md">
+        {% for code in selected_codes %}<input type="hidden" name="branch" value="{{ code }}"/>{% endfor %}
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
+            <input type="text" name="q" value="{{ q }}" placeholder="Search SKU or name..." onchange="this.form.submit()"
+                   class="h-8 pl-8 pr-sm py-0 rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px] w-48"/>
+        </div>
+        <select name="category" onchange="this.form.submit()" class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px]">
+            <option value="">All Categories</option>
+            {% for c in categories %}<option value="{{ c.id }}" {% if category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+        <select name="brand" onchange="this.form.submit()" class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px]">
+            <option value="">All Brands</option>
+            {% for br in brands %}<option value="{{ br.id }}" {% if brand_id == br.id|stringformat:"s" %}selected{% endif %}>{{ br.name }}</option>{% endfor %}
+        </select>
+        <select name="status" onchange="this.form.submit()" class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px]">
+            <option value="">All Stock Levels</option>
+            <option value="in_stock" {% if status_filter == "in_stock" %}selected{% endif %}>In Stock</option>
+            <option value="low" {% if status_filter == "low" %}selected{% endif %}>Low Stock</option>
+            <option value="out" {% if status_filter == "out" %}selected{% endif %}>Out of Stock</option>
+        </select>
+        {% if has_filters %}
+        <a href="{% url 'inventory:list' %}" class="h-8 flex items-center text-on-surface-variant font-label-md text-[12px] font-medium hover:text-primary transition-colors">Clear All</a>
+        {% endif %}
+    </form>
+
+    <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-surface-container-lowest border-b border-outline-variant">
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">SKU</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Product Name</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Category</th>
+                    {% for b in selected_branches %}
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">{{ b.name }}</th>
+                    {% endfor %}
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">Total Network</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-center">Status</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody class="font-mono-data text-[12px] text-on-surface">
+                {% for row in page.object_list %}
+                <tr class="border-b border-outline-variant/60 hover:bg-surface-container-low transition-colors h-10 group">
+                    <td class="px-3 py-1.5 text-on-surface-variant">{{ row.product.sku }}</td>
+                    <td class="px-3 py-1.5 font-body-md text-[13px] font-medium text-on-background">{{ row.product.name }}</td>
+                    <td class="px-3 py-1.5 font-body-md text-[13px] text-on-surface-variant">{{ row.product.category.name }}</td>
+                    {% for bq in row.branch_quantities %}
+                    <td class="px-3 py-1.5 text-right {% if bq.status == "out" %}text-error font-semibold{% elif bq.status == "low" %}text-amber-600 font-semibold{% endif %}">{{ bq.quantity }}</td>
+                    {% endfor %}
+                    <td class="px-3 py-1.5 text-right font-semibold">{{ row.total_network }}</td>
+                    <td class="px-3 py-1.5 text-center">
+                        {% if row.status == "in_stock" %}
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-label-md text-[10px] font-medium border border-emerald-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span>In Stock</span>
+                        {% elif row.status == "low" %}
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-label-md text-[10px] font-medium border border-amber-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1"></span>Low Stock</span>
+                        {% else %}
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-red-50 text-red-700 font-label-md text-[10px] font-medium border border-red-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1"></span>Out of Stock</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-1.5 text-center whitespace-nowrap">
+                        <button type="button" data-action="open-transfer" data-product-id="{{ row.product.id }}" data-product-name="{{ row.product.name }}"
+                                class="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center justify-center" title="Transfer stock">
+                            <span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+                        </button>
+                        {% if is_manager %}
+                        <button type="button" data-action="open-adjust" data-product-id="{{ row.product.id }}" data-product-name="{{ row.product.name }}"
+                                class="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center justify-center" title="Log a stock adjustment (count, damage, return)">
+                            <span class="material-symbols-outlined text-[16px]">edit_note</span>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="{{ selected_branches|length|add:6 }}" class="px-3 py-10 text-center">
+                    <span class="material-symbols-outlined text-[28px] text-outline block mb-xs">inventory_2</span>
+                    <span class="text-secondary font-body-md">No products match these filters.</span>
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <div class="px-3 py-2 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between">
+            <span class="font-body-md text-[12px] text-on-surface-variant">
+                Showing {{ page.start_index }} to {{ page.end_index }} of {{ page.paginator.count }} entries
+            </span>
+            <div class="flex gap-1">
+                {% if page.has_previous %}
+                <a href="?{{ qs_without_page }}&page={{ page.previous_page_number }}"
+                   class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                </a>
+                {% else %}
+                <span class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant opacity-50 flex items-center">
+                    <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                </span>
+                {% endif %}
+                {% for num in page.paginator.page_range %}
+                <a href="?{{ qs_without_page }}&page={{ num }}"
+                   class="h-7 px-2.5 border rounded-md font-mono-data text-[12px] font-medium transition-colors
+                   {% if num == page.number %}border-primary bg-primary text-on-primary{% else %}border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low{% endif %}">{{ num }}</a>
+                {% endfor %}
+                {% if page.has_next %}
+                <a href="?{{ qs_without_page }}&page={{ page.next_page_number }}"
+                   class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                </a>
+                {% else %}
+                <span class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant opacity-50 flex items-center">
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div id="transfer-modal" class="hidden fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-lg">
+    <div class="bg-surface-container-lowest rounded-lg shadow-md w-full max-w-xs p-md">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold mb-xs">Inter-Branch Transfer</h3>
+        <p id="transfer-product-name" class="font-body-md text-body-md text-secondary mb-sm"></p>
+        <form method="post" action="{% url 'inventory:transfer' %}" class="flex flex-col gap-xs">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
+            <input type="hidden" id="transfer-product-id" name="product_id" value=""/>
+            <label class="font-label-md text-label-md text-on-surface-variant">FROM BRANCH</label>
+            <select name="from_branch" required class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md">
+                {% for b in transfer_branches %}<option value="{{ b.id }}">{{ b.name }}{% if b.is_warehouse %} (Warehouse){% endif %}</option>{% endfor %}
+            </select>
+            <label class="font-label-md text-label-md text-on-surface-variant">TO BRANCH</label>
+            <select name="to_branch" required class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md">
+                {% for b in transfer_branches %}<option value="{{ b.id }}">{{ b.name }}{% if b.is_warehouse %} (Warehouse){% endif %}</option>{% endfor %}
+            </select>
+            <label class="font-label-md text-label-md text-on-surface-variant">QUANTITY</label>
+            <input type="number" name="quantity" min="1" required class="h-8 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-mono-data"/>
+            <div class="flex gap-xs mt-sm">
+                <button type="button" data-action="close-transfer" class="flex-1 h-9 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 h-9 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Confirm Transfer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="adjust-modal" class="hidden fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-lg">
+    <div class="bg-surface-container-lowest rounded-lg shadow-md w-full max-w-xs p-md">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold mb-xs">Log Stock Adjustment</h3>
+        <p id="adjust-product-name" class="font-body-md text-body-md text-secondary mb-sm"></p>
+        <form method="post" action="{% url 'inventory:stock_adjust' %}" class="flex flex-col gap-xs">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
+            <input type="hidden" id="adjust-product-id" name="product_id" value=""/>
+            <label class="font-label-md text-label-md text-on-surface-variant">BRANCH</label>
+            <select name="branch" required class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md">
+                {% for b in transfer_branches %}<option value="{{ b.id }}">{{ b.name }}{% if b.is_warehouse %} (Warehouse){% endif %}</option>{% endfor %}
+            </select>
+            <label class="font-label-md text-label-md text-on-surface-variant">REASON</label>
+            <select name="reason" required class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md">
+                <option value="count">Cycle count</option>
+                <option value="damage">Damaged / written off</option>
+                <option value="return">Customer return</option>
+                <option value="other">Other</option>
+            </select>
+            <label class="font-label-md text-label-md text-on-surface-variant">NEW COUNTED QUANTITY</label>
+            <input type="number" name="new_quantity" min="0" required class="h-8 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-mono-data"/>
+            <p class="font-body-md text-[11px] text-secondary -mt-0.5">Enter the actual on-hand count after the count/damage/return — not the change amount.</p>
+            <label class="font-label-md text-label-md text-on-surface-variant">NOTE (OPTIONAL)</label>
+            <input type="text" name="note" maxlength="255" class="h-8 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md"/>
+            <div class="flex gap-xs mt-sm">
+                <button type="button" data-action="close-adjust" class="flex-1 h-9 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 h-9 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Save Adjustment</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'chromapos/js/inventory.js' %}"></script>
+{% endblock %}

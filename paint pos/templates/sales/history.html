@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Sales History - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1200px] mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-md mb-lg">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Sales History</h1>
+            <p class="font-body-md text-on-surface-variant mt-1">
+                {% if is_manager %}Every sale at your branches — managers can void a completed sale.
+                {% else %}Sales you rang up.{% endif %}
+            </p>
+        </div>
+        <form method="get" class="flex flex-wrap gap-sm items-center">
+            <input type="text" name="q" value="{{ q }}" placeholder="Invoice or customer..."
+                   class="h-10 px-3 py-0 rounded-xl border border-outline-variant bg-surface-container-lowest font-body-md text-[13px] w-56"/>
+            <select name="status" onchange="this.form.submit()" class="h-10 px-3 py-0 rounded-xl border border-outline-variant bg-surface-container-lowest font-body-md text-[13px]">
+                <option value="">All statuses</option>
+                {% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="h-10 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Search</button>
+        </form>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+                    <th class="px-5 py-4 font-semibold">Invoice</th>
+                    <th class="px-5 py-4 font-semibold">When</th>
+                    <th class="px-5 py-4 font-semibold">Branch</th>
+                    <th class="px-5 py-4 font-semibold">Customer</th>
+                    <th class="px-5 py-4 font-semibold">Cashier</th>
+                    <th class="px-5 py-4 font-semibold text-right">Total</th>
+                    <th class="px-5 py-4 font-semibold text-center">Status</th>
+                    <th class="px-5 py-4 font-semibold text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="font-body-md text-[14px] text-on-surface">
+                {% for sale in page.object_list %}
+                <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors {% if sale.is_void %}opacity-60{% endif %}">
+                    <td class="px-5 py-3 font-mono-data text-[13px]">{{ sale.invoice_number }}</td>
+                    <td class="px-5 py-3 text-secondary">{{ sale.completed_at|default:sale.created_at|date:"M d, Y H:i" }}</td>
+                    <td class="px-5 py-3 text-secondary">{{ sale.branch.name }}</td>
+                    <td class="px-5 py-3">
+                        {% if sale.customer %}<a href="{% url 'customers:detail' sale.customer.pk %}" class="text-primary hover:underline">{{ sale.customer.name }}</a>
+                        {% else %}<span class="text-secondary">Walk-in</span>{% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-secondary font-mono-data text-[12px]">{{ sale.cashier.username }}</td>
+                    <td class="px-5 py-3 text-right font-mono-data font-semibold">${{ sale.total|floatformat:2|intcomma }}</td>
+                    <td class="px-5 py-3 text-center">
+                        {% if sale.is_void %}
+                        <span class="inline-flex px-2.5 py-1 rounded-md bg-red-50 text-red-700 font-label-md text-[11px] border border-red-100" title="{{ sale.void_reason }}">Void</span>
+                        {% else %}
+                        <span class="inline-flex px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-label-md text-[11px] border border-emerald-100">Completed</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right whitespace-nowrap">
+                        <a href="{% url 'sales:receipt' sale.pk %}" class="text-primary font-label-md text-[13px] font-medium hover:underline">Receipt</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="px-5 py-10 text-center text-secondary">No sales match this filter.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if page.paginator.num_pages > 1 %}
+        <div class="px-5 py-3 border-t border-outline-variant flex items-center justify-between">
+            <span class="font-body-md text-[13px] text-on-surface-variant">Showing {{ page.start_index }}–{{ page.end_index }} of {{ page.paginator.count }}</span>
+            <div class="flex gap-1">
+                {% if page.has_previous %}<a href="?q={{ q }}&status={{ status }}&page={{ page.previous_page_number }}" class="h-8 px-3 border border-outline-variant rounded-md font-mono-data text-[13px] hover:bg-surface-container-low">Prev</a>{% endif %}
+                {% if page.has_next %}<a href="?q={{ q }}&status={{ status }}&page={{ page.next_page_number }}" class="h-8 px-3 border border-outline-variant rounded-md font-mono-data text-[13px] hover:bg-surface-container-low">Next</a>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}

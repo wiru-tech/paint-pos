@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Customer History - ChromaPOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#d9dadb",
+                      "background": "#f8f9fa",
+                      "surface-container-lowest": "#ffffff",
+                      "primary": "#004ac6",
+                      "on-tertiary-container": "#bdffdb",
+                      "on-background": "#191c1d",
+                      "surface-tint": "#0053db",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#002113",
+                      "on-secondary-fixed": "#111c2d",
+                      "outline-variant": "#e2e8f0",
+                      "tertiary": "#006242",
+                      "on-secondary-container": "#475569",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-primary": "#ffffff",
+                      "surface-container-low": "#f8fafc",
+                      "error-container": "#ffdad6",
+                      "primary-container": "#2563eb",
+                      "surface": "#f8f9fa",
+                      "surface-variant": "#f1f5f9",
+                      "inverse-surface": "#2e3132",
+                      "secondary-container": "#e2e8f0",
+                      "primary-fixed": "#dbe1ff",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#bcc7de",
+                      "on-secondary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-surface": "#0f172a",
+                      "on-surface-variant": "#475569",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "tertiary-fixed": "#6ffbbe",
+                      "surface-container": "#f1f5f9",
+                      "inverse-primary": "#b4c5ff",
+                      "on-error-container": "#93000a",
+                      "secondary": "#64748b",
+                      "secondary-fixed": "#d8e3fb",
+                      "on-secondary-fixed-variant": "#3c475a",
+                      "surface-container-high": "#e7e8e9",
+                      "on-primary-fixed": "#00174b",
+                      "surface-container-highest": "#e1e3e4",
+                      "tertiary-container": "#007d55",
+                      "outline": "#cbd5e1",
+                      "surface-bright": "#f8f9fa",
+                      "on-primary-container": "#eeefff",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.375rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "sm": "8px",
+                      "container-margin": "24px",
+                      "md": "16px",
+                      "xs": "4px",
+                      "lg": "24px",
+                      "xl": "32px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "mono-data": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "mono-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              },
+              boxShadow: {
+                  'premium': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03)',
+                  'premium-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03)'
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        .hover-lift { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-lift:hover { transform: translateY(-1px); }
+    </style>
+</head>
+<body class="bg-surface-container-low text-on-surface font-body-md min-h-screen flex antialiased">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-lg px-md gap-sm border-r border-outline-variant w-[260px] fixed left-0 top-0 bg-surface-container-lowest z-40">
+<div class="mb-lg px-sm">
+<div class="font-headline-md text-headline-md text-on-surface mb-lg tracking-tight">ChromaPOS</div>
+<div class="flex items-center gap-md bg-surface-variant p-sm rounded-xl">
+<img alt="Branch Logo" class="w-10 h-10 rounded-full border border-outline-variant object-cover bg-white" data-alt="A clean, minimalist logo of a paint retail branch featuring geometric shapes in shades of corporate blue and white. The design is flat, modern, and suitable for a high-end corporate identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDj04132N27XMAyBSH7wWTu51u21PZky6vfmtjBTTT-XUTiXT103VeZc7_6DR40RBeb08bqQkQbHg8Itl-KKuHxLagmB0xlIxAQ2F4ov9f2cq9XcRV9mu6HTA93EEs1l72X2gObIeqq1sa7D2h2v45KE3a4En3O--VN3jsTImftFzterLDuGZHgOADfrs7fI0-SNEPrM-N9NgR5NnscXbh8gTUrWWpn1RsZbMij0vIwGvglFiKhqMmcg"/>
+<div>
+<div class="font-label-md text-label-md text-on-surface font-semibold">Downtown Branch</div>
+<div class="text-[11px] text-secondary font-medium">Active Session: 8h</div>
+</div>
+</div>
+<button class="w-full mt-md bg-primary text-on-primary font-body-md py-2.5 px-md rounded-xl flex items-center justify-center gap-xs hover:bg-primary/90 transition-all shadow-premium hover:shadow-premium-hover font-medium">
+<span class="material-symbols-outlined" style="font-size: 18px;">blender</span> Quick Mix
+            </button>
+</div>
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<div class="px-sm mb-2 font-label-md text-[11px] text-secondary uppercase tracking-wider">Main Menu</div>
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-variant transition-all font-body-md group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-surface-variant transition-colors" data-icon="point_of_sale">point_of_sale</span> Sales
+            </a>
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-variant transition-all font-body-md group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-surface-variant transition-colors" data-icon="palette">palette</span> Tinting Desk
+            </a>
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-variant transition-all font-body-md group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-surface-variant transition-colors" data-icon="inventory_2">inventory_2</span> Inventory
+            </a>
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl bg-primary-fixed/30 text-primary font-medium font-body-md transition-all border border-primary-fixed" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="history">history</span> Customer History
+            </a>
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-variant transition-all font-body-md group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-surface-variant transition-colors" data-icon="analytics">analytics</span> Reports
+            </a>
+</div>
+<div class="mt-auto pt-md border-t border-outline-variant flex flex-col gap-1">
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-variant transition-all font-body-md group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-surface-variant transition-colors" data-icon="settings">settings</span> Settings
+            </a>
+<a class="flex items-center gap-md px-sm py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-variant transition-all font-body-md group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-surface-variant transition-colors" data-icon="help">help</span> Support
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-[260px] flex flex-col min-h-screen">
+<!-- TopNavBar (Mobile only for Nav, kept for top actions on desktop) -->
+<header class="flex justify-between items-center h-[72px] px-xl w-full z-30 bg-surface-container-lowest border-b border-outline-variant sticky top-0">
+<div class="md:hidden font-headline-sm text-headline-sm font-bold text-primary">ChromaPOS</div>
+<div class="flex-1 flex justify-center md:justify-start max-w-2xl">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-10 pr-sm py-2 rounded-xl border border-outline-variant bg-surface-container-low focus:bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none font-body-md text-on-surface h-10 transition-all placeholder:text-secondary/70" placeholder="Search customers, formulas..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<button class="text-secondary hover:text-on-surface transition-colors flex items-center justify-center bg-surface-variant w-10 h-10 rounded-full">
+<span class="material-symbols-outlined" data-icon="cloud_done">cloud_done</span>
+</button>
+<div class="hidden md:flex gap-sm items-center border-l border-outline-variant pl-lg">
+<button class="bg-surface-variant text-on-surface-variant font-body-md font-medium py-2 px-md rounded-xl hover:bg-outline-variant transition-colors h-10">Tint Lookup</button>
+<button class="bg-primary text-on-primary font-body-md font-medium py-2 px-md rounded-xl hover:bg-primary/90 transition-all shadow-premium hover:shadow-premium-hover h-10">New Sale</button>
+</div>
+<button class="flex items-center justify-center ring-2 ring-transparent hover:ring-primary/20 rounded-full transition-all">
+<img alt="Store Manager Profile" class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a retail store manager, slightly smiling, wearing a dark navy polo shirt in a bright, modern hardware store environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZBLvczFtNv3GDlQlplikzuGx8_iGMM2ml5TTWPhBA5n6Qk39zeouUk7OsQ6SP482dJEeOVso3o0FeTuzkyW2DMunspqTfYwUXFFiNsKMkxaeioEc3To3ROfX3GwNCeKEbs0wQtFfqbkaZrqHK5ltDDIwMOA4qUI-5QxDXnPDGTwyN5eeppuA1671zOJh05hJDoqHyvzbccka2nc4eOdAxez-lK9m48wO_v4XnHshkXXqiLTBGTZ7jKQ"/>
+</button>
+</div>
+</header>
+<div class="p-xl flex-1 overflow-y-auto flex flex-col gap-xl max-w-7xl mx-auto w-full">
+<!-- Customer Profile Header -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg flex flex-col md:flex-row gap-xl items-center md:items-start shadow-premium">
+<div class="flex gap-lg items-center w-full md:w-auto md:border-r border-outline-variant pb-md md:pb-0 md:pr-xl">
+<div class="w-20 h-20 rounded-full bg-primary-fixed/40 flex items-center justify-center text-primary font-headline-md text-[28px] font-bold border-4 border-primary-fixed">
+                        EJ
+                    </div>
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm">Elena Jenkins <span class="bg-primary-fixed/50 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase">Pro</span></h1>
+<p class="font-body-md text-secondary mt-1.5 flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary" style="font-size: 16px;">phone</span> (555) 019-2834
+                        </p>
+</div>
+</div>
+<div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-lg w-full pt-2">
+<div>
+<p class="font-label-md text-[11px] text-secondary uppercase tracking-wider mb-1.5">Total Spend</p>
+<p class="font-mono-data text-on-surface text-[18px] font-semibold">$12,450</p>
+</div>
+<div>
+<p class="font-label-md text-[11px] text-secondary uppercase tracking-wider mb-1.5">Last Visit</p>
+<p class="font-body-md text-on-surface font-medium text-[15px]">Oct 12, 2023</p>
+</div>
+<div>
+<p class="font-label-md text-[11px] text-secondary uppercase tracking-wider mb-1.5">Fav Brand</p>
+<p class="font-body-md text-on-surface font-medium text-[15px]">AeroCoat</p>
+</div>
+<div>
+<p class="font-label-md text-[11px] text-secondary uppercase tracking-wider mb-1.5">Store Credit</p>
+<p class="font-mono-data text-tertiary-container font-semibold text-[18px]">$150.00</p>
+</div>
+</div>
+</section>
+<!-- Main Content Split -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-xl">
+<!-- Left Column: History & Saved Colors -->
+<div class="xl:col-span-2 flex flex-col gap-xl">
+<!-- Saved Custom Color Codes -->
+<section>
+<div class="flex justify-between items-end mb-md">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Saved Color Formulas</h2>
+<button class="text-primary font-body-md font-medium hover:text-primary/80 transition-colors">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Color Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex gap-md shadow-premium hover:shadow-premium-hover hover-lift cursor-pointer group">
+<div class="w-24 h-24 rounded-lg shrink-0 border border-black/10 relative overflow-hidden shadow-inner" style="background-color: #2D4A3E;">
+<div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white font-label-md text-[10px] py-1 text-center backdrop-blur-md font-medium tracking-widest">MATTE</div>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg text-on-surface group-hover:text-primary transition-colors">Deep Forest Study</h3>
+<button class="text-secondary hover:text-on-surface p-1 rounded-full hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined" style="font-size: 20px;">more_vert</span></button>
+</div>
+<p class="font-mono-data text-[12px] text-secondary mt-0.5">Ref: CUS-892-A</p>
+</div>
+<div class="flex gap-sm mt-3">
+<button class="flex-1 bg-surface-variant text-on-surface font-body-md font-medium py-1.5 rounded-lg hover:bg-outline-variant transition-colors">Details</button>
+<button class="flex-1 bg-primary text-on-primary font-body-md font-medium py-1.5 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-xs shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">shopping_cart</span> Reorder
+                                        </button>
+</div>
+</div>
+</div>
+<!-- Color Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex gap-md shadow-premium hover:shadow-premium-hover hover-lift cursor-pointer group">
+<div class="w-24 h-24 rounded-lg shrink-0 border border-black/10 relative overflow-hidden shadow-inner" style="background-color: #E8DCC4;">
+<div class="absolute bottom-0 left-0 right-0 bg-black/30 text-white font-label-md text-[10px] py-1 text-center backdrop-blur-md font-medium tracking-widest">EGGSHELL</div>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg text-on-surface group-hover:text-primary transition-colors">Lobby Warm Sand</h3>
+<button class="text-secondary hover:text-on-surface p-1 rounded-full hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined" style="font-size: 20px;">more_vert</span></button>
+</div>
+<p class="font-mono-data text-[12px] text-secondary mt-0.5">Ref: CUS-441-B</p>
+</div>
+<div class="flex gap-sm mt-3">
+<button class="flex-1 bg-surface-variant text-on-surface font-body-md font-medium py-1.5 rounded-lg hover:bg-outline-variant transition-colors">Details</button>
+<button class="flex-1 bg-primary text-on-primary font-body-md font-medium py-1.5 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-xs shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">shopping_cart</span> Reorder
+                                        </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Purchase History Data Table -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-premium overflow-hidden flex flex-col">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Recent Purchases</h2>
+<button class="text-primary font-body-md font-medium hover:text-primary/80 transition-colors flex items-center gap-xs">
+                                View Full History <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+<th class="py-3 px-lg font-semibold">Date/Inv</th>
+<th class="py-3 px-sm font-semibold">Product / Color</th>
+<th class="py-3 px-sm font-semibold">Qty</th>
+<th class="py-3 px-lg text-right font-semibold">Total</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-on-surface">
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-lg align-top">
+<div class="font-medium text-on-surface">Oct 12, 2023</div>
+<div class="font-mono-data text-[12px] text-secondary mt-1">#INV-9923</div>
+</td>
+<td class="py-4 px-sm align-top">
+<div class="font-medium text-on-surface mb-1.5">AeroCoat Premium Interior</div>
+<div class="flex items-center gap-2 bg-surface p-1.5 rounded-md inline-flex border border-outline-variant/50">
+<div class="w-3.5 h-3.5 rounded-sm border border-black/10 shadow-inner" style="background-color: #2D4A3E;"></div>
+<span class="text-secondary text-[13px] font-medium">Deep Forest Study (Matte)</span>
+</div>
+</td>
+<td class="py-4 px-sm align-top font-mono-data text-secondary">5 Gal</td>
+<td class="py-4 px-lg text-right align-top font-mono-data font-semibold text-on-surface">$245.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-lg align-top">
+<div class="font-medium text-on-surface">Sep 04, 2023</div>
+<div class="font-mono-data text-[12px] text-secondary mt-1">#INV-8812</div>
+</td>
+<td class="py-4 px-sm align-top">
+<div class="font-medium text-on-surface mb-1.5">ProLine Exterior Shield</div>
+<div class="flex items-center gap-2 bg-surface p-1.5 rounded-md inline-flex border border-outline-variant/50">
+<div class="w-3.5 h-3.5 rounded-sm border border-black/10 shadow-inner" style="background-color: #F5F5F5;"></div>
+<span class="text-secondary text-[13px] font-medium">Navajo White (Satin)</span>
+</div>
+</td>
+<td class="py-4 px-sm align-top font-mono-data text-secondary">10 Gal</td>
+<td class="py-4 px-lg text-right align-top font-mono-data font-semibold text-on-surface">$390.00</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-lg align-top">
+<div class="font-medium text-on-surface">Aug 22, 2023</div>
+<div class="font-mono-data text-[12px] text-secondary mt-1">#INV-7433</div>
+</td>
+<td class="py-4 px-sm align-top">
+<div class="font-medium text-on-surface mb-1.5">AeroCoat Premium Interior</div>
+<div class="flex items-center gap-2 bg-surface p-1.5 rounded-md inline-flex border border-outline-variant/50">
+<div class="w-3.5 h-3.5 rounded-sm border border-black/10 shadow-inner" style="background-color: #E8DCC4;"></div>
+<span class="text-secondary text-[13px] font-medium">Lobby Warm Sand (Eggshell)</span>
+</div>
+</td>
+<td class="py-4 px-sm align-top font-mono-data text-secondary">2 Gal</td>
+<td class="py-4 px-lg text-right align-top font-mono-data font-semibold text-on-surface">$105.50</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Column: Quick Tools & Context -->
+<div class="flex flex-col gap-xl">
+<!-- Quick Mix Tool Widget -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-premium">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-lg flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary bg-primary-fixed/30 p-1.5 rounded-lg">science</span> Quick Re-tint
+                        </h3>
+<div class="space-y-lg">
+<div>
+<label class="font-label-md text-[12px] font-semibold text-on-surface mb-2 block">Select Base</label>
+<div class="relative">
+<select class="w-full h-11 border border-outline-variant rounded-xl px-sm font-body-md bg-surface focus:bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all shadow-sm">
+<option>AeroCoat Int. Matte - Base 1</option>
+<option>AeroCoat Int. Matte - Base 2</option>
+<option>AeroCoat Int. Matte - Base 3</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="border border-outline-variant rounded-xl p-md bg-surface-container-low flex flex-col gap-2">
+<div class="font-label-md text-[11px] text-secondary uppercase tracking-wider mb-2">Formula (OZS-48-96)</div>
+<div class="flex justify-between items-center py-1.5 border-b border-outline-variant border-dashed">
+<span class="font-mono-data text-[13px] text-on-surface font-medium">BLK (Black)</span>
+<span class="font-mono-data text-[13px] text-on-surface font-bold bg-surface px-2 py-0.5 rounded border border-outline-variant">0 - 12 - 0</span>
+</div>
+<div class="flex justify-between items-center py-1.5 border-b border-outline-variant border-dashed">
+<span class="font-mono-data text-[13px] text-on-surface font-medium">YO (Yellow Oxide)</span>
+<span class="font-mono-data text-[13px] text-on-surface font-bold bg-surface px-2 py-0.5 rounded border border-outline-variant">0 - 4 - 1</span>
+</div>
+<div class="flex justify-between items-center py-1.5">
+<span class="font-mono-data text-[13px] text-on-surface font-medium">TG (Thalo Green)</span>
+<span class="font-mono-data text-[13px] text-on-surface font-bold bg-surface px-2 py-0.5 rounded border border-outline-variant">1 - 2 - 0</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-body-md font-medium py-2.5 rounded-xl hover:bg-primary/90 transition-all shadow-premium hover:shadow-premium-hover flex items-center justify-center gap-2">
+                                Send to Dispenser <span class="material-symbols-outlined" style="font-size: 18px;">send</span>
+</button>
+</div>
+</div>
+<!-- Preferences / Notes -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-premium flex-1 flex flex-col">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Customer Notes</h3>
+<button class="text-secondary hover:text-primary p-1 rounded-full hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined" style="font-size: 20px;">edit</span></button>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex-1 font-body-md text-[15px] leading-relaxed text-secondary overflow-y-auto">
+                            Prefers AeroCoat brand for interior jobs. 
+                            <br/><br/>
+                            Always uses Matte finish in living areas, Eggshell in hallways. 
+                            <br/><br/>
+                            Requires physical swatches printed for large orders (&gt;10 Gal).
+                        </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

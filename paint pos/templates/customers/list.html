@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Customer History - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-4xl mx-auto w-full">
+    <div class="flex items-start justify-between gap-sm mb-xs">
+        <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Customer History</h1>
+        <a href="{% url 'customers:create' %}" class="h-8 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs shrink-0">
+            <span class="material-symbols-outlined text-[15px]">person_add</span> New Customer
+        </a>
+    </div>
+    <p class="font-body-md text-on-surface-variant mb-md text-[13px]">Search a customer to see saved formulas, purchase history and store credit.</p>
+
+    <div class="flex gap-xs mb-md">
+        <a href="?{% if q %}q={{ q }}&{% endif %}type=" class="h-8 px-sm rounded-lg font-label-md text-[12px] flex items-center gap-xs transition-colors {% if not customer_type %}bg-primary text-on-primary{% else %}border border-outline-variant text-on-surface hover:bg-surface-container-low{% endif %}">
+            All <span class="opacity-70">{{ regular_count|add:walkin_count }}</span>
+        </a>
+        <a href="?{% if q %}q={{ q }}&{% endif %}type=regular" class="h-8 px-sm rounded-lg font-label-md text-[12px] flex items-center gap-xs transition-colors {% if customer_type == 'regular' %}bg-primary text-on-primary{% else %}border border-outline-variant text-on-surface hover:bg-surface-container-low{% endif %}">
+            <span class="material-symbols-outlined text-[14px]">person</span> Regular <span class="opacity-70">{{ regular_count }}</span>
+        </a>
+        <a href="?{% if q %}q={{ q }}&{% endif %}type=walkin" class="h-8 px-sm rounded-lg font-label-md text-[12px] flex items-center gap-xs transition-colors {% if customer_type == 'walkin' %}bg-primary text-on-primary{% else %}border border-outline-variant text-on-surface hover:bg-surface-container-low{% endif %}">
+            <span class="material-symbols-outlined text-[14px]">directions_walk</span> Walk-ins <span class="opacity-70">{{ walkin_count }}</span>
+        </a>
+    </div>
+
+    <form method="get" class="mb-md">
+        <input type="hidden" name="type" value="{{ customer_type }}"/>
+        <div class="relative max-w-sm">
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[16px]">search</span>
+            <input type="text" name="q" value="{{ q }}" placeholder="Search customers, phone, email..."
+                   class="w-full pl-8 pr-sm h-8 rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[12px]" autofocus/>
+        </div>
+    </form>
+
+    <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+        {% for customer in customers %}
+        <a href="{% url 'customers:detail' customer.pk %}" class="flex items-center gap-sm px-sm py-xs border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors">
+            <div class="w-8 h-8 rounded-full {% if customer.is_walkin %}bg-surface-container-high{% else %}bg-primary-fixed{% endif %} flex items-center justify-center {% if customer.is_walkin %}text-secondary{% else %}text-primary{% endif %} font-headline-sm text-[12px] font-bold shrink-0">
+                {% if customer.is_walkin %}<span class="material-symbols-outlined text-[16px]">directions_walk</span>{% else %}{{ customer.initials }}{% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-xs">
+                    <span class="font-body-md text-[13px] text-on-surface truncate">{{ customer.name }}</span>
+                    {% if customer.is_pro %}<span class="bg-primary-fixed text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Pro</span>{% endif %}
+                    {% if customer.is_walkin %}<span class="bg-surface-variant text-on-surface-variant text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Walk-in</span>{% endif %}
+                </div>
+                <p class="font-body-md text-[11px] text-secondary truncate">{% if customer.is_walkin %}Name only{% else %}{{ customer.phone }}{% if customer.favorite_brand %} · Favors {{ customer.favorite_brand.name }}{% endif %}{% endif %}</p>
+            </div>
+            <span class="material-symbols-outlined text-secondary text-[18px]">chevron_right</span>
+        </a>
+        {% empty %}
+        <div class="p-lg text-center text-secondary font-body-md">No customers found.</div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+{% endblock %}

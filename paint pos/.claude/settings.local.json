@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd *)",
+      "Bash(\"venv/Scripts/python.exe\" -m django --version)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py migrate)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py check)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py runserver 127.0.0.1:8000 --noreload)",
+      "Bash(sleep *)",
+      "Bash(curl -s http://127.0.0.1:8000/)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py runserver 127.0.0.1:8000)",
+      "Bash(curl -s -o /dev/null -w \"home: %{http_code}\\\\n\" http://127.0.0.1:8000/)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py makemigrations core accounts catalog inventory customers sales)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py seed_demo_data)",
+      "Bash(venv/Scripts/python.exe manage.py shell -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"admin: %{http_code}\\\\n\" http://127.0.0.1:8000/admin/)",
+      "Bash(curl -s -o /dev/null -w \"status: %{http_code}\\\\n\" http://127.0.0.1:8000/ --max-time 5)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(\"venv/Scripts/python.exe\" manage.py test)",
+      "Bash(curl *)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py test sales inventory customers)",
+      "Bash(\"venv/Scripts/python.exe\" manage.py test sales)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}

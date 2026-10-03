@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Notifications - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-3xl mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-md mb-lg">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Notifications</h1>
+            <p class="font-body-md text-on-surface-variant mt-1">Low-stock alerts and transfer requests for your branch.</p>
+        </div>
+        {% if unread_notifications %}
+        <form method="post" action="{% url 'core:notifications_read_all' %}">
+            {% csrf_token %}
+            <button type="submit" class="h-11 px-lg border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">mark_email_read</span> Mark all read
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="flex flex-col gap-sm">
+        {% for note in notifications %}
+        <div class="bg-surface-container-lowest border rounded-xl p-md shadow-sm flex gap-md items-start {% if note.is_read %}border-outline-variant opacity-70{% elif note.level == 'critical' %}border-error{% else %}border-primary-fixed-dim{% endif %}">
+            <span class="material-symbols-outlined shrink-0 {% if note.level == 'critical' %}text-error{% elif note.level == 'warning' %}text-amber-600{% else %}text-primary{% endif %}">{{ note.icon }}</span>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-sm flex-wrap">
+                    <span class="font-body-lg text-body-lg text-on-surface">{{ note.title }}</span>
+                    {% if not note.is_read %}<span class="w-2 h-2 rounded-full bg-primary"></span>{% endif %}
+                </div>
+                {% if note.message %}<p class="font-body-md text-[13px] text-secondary mt-1">{{ note.message }}</p>{% endif %}
+                <p class="font-mono-data text-[11px] text-secondary mt-1">{{ note.created_at|date:"M d, Y H:i" }}{% if note.branch %} · {{ note.branch.name }}{% endif %}</p>
+            </div>
+            <form method="post" action="{% url 'core:notification_read' note.pk %}" class="shrink-0">
+                {% csrf_token %}
+                <button type="submit" class="h-9 px-md border border-outline-variant rounded-xl font-label-md text-[12px] hover:bg-surface-container-low transition-colors">
+                    {% if note.url %}Open{% else %}Dismiss{% endif %}
+                </button>
+            </form>
+        </div>
+        {% empty %}
+        <div class="bg-surface-container-lowest rounded-xl p-xl text-center shadow-sm">
+            <span class="material-symbols-outlined text-[40px] text-outline-variant">notifications_off</span>
+            <p class="font-body-md text-body-md text-secondary mt-sm">Nothing to see — you're all caught up.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+{% endblock %}

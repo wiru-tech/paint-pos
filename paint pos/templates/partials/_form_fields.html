@@ -1,0 +1,19 @@
+{% comment %}Renders a form's fields with the ChromaPOS look. Expects `form`.{% endcomment %}
+{% if form.non_field_errors %}
+<div class="px-md py-sm rounded-xl bg-error-container text-on-error-container font-body-md text-[13px]">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+</div>
+{% endif %}
+{% for field in form %}
+<div class="flex flex-col gap-xs {% if field.field.widget.input_type == 'checkbox' %}flex-row items-center gap-sm{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}
+        {{ field }}
+        <label for="{{ field.id_for_label }}" class="font-body-md text-body-md text-on-surface">{{ field.label }}</label>
+    {% else %}
+        <label for="{{ field.id_for_label }}" class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{{ field.label }}</label>
+        {{ field }}
+    {% endif %}
+    {% if field.help_text %}<p class="font-body-md text-[12px] text-secondary">{{ field.help_text }}</p>{% endif %}
+    {% for error in field.errors %}<p class="font-body-md text-[12px] text-error">{{ error }}</p>{% endfor %}
+</div>
+{% endfor %}

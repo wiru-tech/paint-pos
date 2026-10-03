@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Transfers - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1200px] mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-md mb-lg">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Stock Transfers</h1>
+            <p class="font-body-md text-on-surface-variant mt-1">
+                {% if is_manager %}Approve requests to move stock between branches — stock moves when you approve.
+                {% else %}Requests you file here need a manager at the source branch to approve them.{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'inventory:list' %}" class="h-11 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs w-fit">
+            <span class="material-symbols-outlined text-[18px]">add</span> New Transfer
+        </a>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-lg">
+        {% for value, label in status_choices %}
+        <a href="?status={{ value }}" class="h-8 px-4 rounded-full font-label-md text-[13px] font-medium flex items-center gap-2 border transition-colors {% if status == value %}bg-primary text-on-primary border-primary{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low{% endif %}">
+            {{ label }}{% if value == "pending" and pending_count %} ({{ pending_count }}){% endif %}
+        </a>
+        {% endfor %}
+        <a href="?status=all" class="h-8 px-4 rounded-full font-label-md text-[13px] font-medium flex items-center border transition-colors {% if status == 'all' %}bg-primary text-on-primary border-primary{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low{% endif %}">All</a>
+    </div>
+
+    <div class="flex flex-col gap-sm">
+        {% for transfer in transfers %}
+        <div class="bg-surface-container-lowest rounded-xl p-lg shadow-sm flex flex-col lg:flex-row lg:items-center gap-md">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-sm flex-wrap">
+                    <span class="font-body-lg text-body-lg text-on-surface">{{ transfer.quantity }} x {{ transfer.product.name }}</span>
+                    <span class="inline-flex px-2.5 py-1 rounded-md font-label-md text-[11px] border
+                        {% if transfer.status == 'pending' %}bg-amber-50 text-amber-700 border-amber-100
+                        {% elif transfer.status == 'completed' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                        {% else %}bg-red-50 text-red-700 border-red-100{% endif %}">{{ transfer.get_status_display }}</span>
+                </div>
+                <p class="font-body-md text-[13px] text-secondary mt-1 flex items-center gap-xs flex-wrap">
+                    <span class="font-mono-data">{{ transfer.product.sku }}</span> ·
+                    {{ transfer.from_branch.name }}
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    {{ transfer.to_branch.name }}
+                </p>
+                <p class="font-mono-data text-[11px] text-secondary mt-1">
+                    Requested {{ transfer.created_at|date:"M d, H:i" }}{% if transfer.created_by %} by {{ transfer.created_by.username }}{% endif %}
+                    {% if transfer.decided_at %} · decided {{ transfer.decided_at|date:"M d, H:i" }}{% if transfer.decided_by %} by {{ transfer.decided_by.username }}{% endif %}{% endif %}
+                </p>
+                {% if transfer.note %}<p class="font-body-md text-[13px] text-on-surface-variant mt-2 italic">“{{ transfer.note }}”</p>{% endif %}
+                {% if transfer.decision_note %}<p class="font-body-md text-[13px] text-secondary mt-1">Decision: {{ transfer.decision_note }}</p>{% endif %}
+            </div>
+
+            {% if transfer.is_pending and is_manager %}
+            <div class="flex gap-sm shrink-0">
+                <form method="post" action="{% url 'inventory:transfer_decide' transfer.pk 'reject' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="h-10 px-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-error-container hover:text-on-error-container transition-colors">Reject</button>
+                </form>
+                <form method="post" action="{% url 'inventory:transfer_decide' transfer.pk 'approve' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="h-10 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Approve</button>
+                </form>
+            </div>
+            {% elif transfer.is_pending %}
+            <span class="font-body-md text-[13px] text-secondary shrink-0">Waiting on a manager</span>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="bg-surface-container-lowest rounded-xl p-xl text-center shadow-sm">
+            <span class="material-symbols-outlined text-[40px] text-outline-variant">swap_horiz</span>
+            <p class="font-body-md text-body-md text-secondary mt-sm">No transfers with this status.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+{% endblock %}

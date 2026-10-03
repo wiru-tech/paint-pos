@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sales - ChromaPOS{% endblock %}
+{% block content %}
+<div id="sales-desk"
+     class="flex-1 flex flex-col items-center overflow-y-auto bg-background p-lg"
+     data-product-search-url="{% url 'sales:product_search' %}"
+     data-cart-add-url="{% url 'sales:cart_add' %}"
+     data-cart-qty-url-template="{% url 'sales:cart_update_qty' item_id=0 %}"
+     data-cart-remove-url-template="{% url 'sales:cart_remove_item' item_id=0 %}"
+     data-tint-calculate-url="{% url 'sales:tint_calculate' %}"
+     data-tint-add-url="{% url 'sales:tint_add' %}"
+     data-payment-add-url="{% url 'sales:add_payment' %}"
+     data-desk-url="{% url 'sales:desk' %}"
+     data-auto-open-tint="{% if request.GET.tint %}1{% endif %}">
+    <div id="cart-panel" class="w-full max-w-2xl">
+        {% include "sales/_cart_panel.html" %}
+    </div>
+</div>
+
+<div id="tinting-modal" class="hidden fixed inset-0 bg-black/50 z-[100] items-center justify-center p-lg">
+    <div class="bg-surface w-full max-w-[60rem] max-h-[85vh] rounded-lg shadow-md overflow-hidden flex flex-col relative">
+        <button type="button" data-action="close-tinting" class="absolute top-sm right-sm z-10 w-7 h-7 rounded-full bg-surface-container-lowest border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+        <div id="tinting-panel" class="@container flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-md flex flex-col gap-md">
+            {% include "sales/_tinting_panel.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'chromapos/js/sales_desk.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Brands &amp; Pigments - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1200px] mx-auto w-full flex flex-col gap-xl">
+
+    <div>
+        <a href="{% url 'catalog:product_list' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+            <span class="material-symbols-outlined text-[16px]">arrow_back</span> Catalog
+        </a>
+        <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Categories, Brands &amp; Pigments</h1>
+        <p class="font-body-md text-on-surface-variant mt-1">Pigments feed the tinting desk — the code must match the mix engine (B, C, E, KX, TG).</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
+        <section class="bg-surface-container-lowest rounded-xl p-lg shadow-sm flex flex-col gap-md">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Categories</h2>
+            <div class="flex flex-col divide-y divide-outline-variant/60">
+                {% for c in categories %}<div class="py-2 font-body-md text-[14px] text-on-surface">{{ c.name }}</div>{% empty %}<p class="text-secondary font-body-md text-[13px]">None yet.</p>{% endfor %}
+            </div>
+            <form method="post" class="flex flex-col gap-sm border-t border-outline-variant pt-md">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="category"/>
+                {% include "partials/_form_fields.html" with form=category_form %}
+                <button type="submit" class="h-10 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Add Category</button>
+            </form>
+        </section>
+
+        <section class="bg-surface-container-lowest rounded-xl p-lg shadow-sm flex flex-col gap-md">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Brands</h2>
+            <div class="flex flex-col divide-y divide-outline-variant/60">
+                {% for b in brands %}<div class="py-2 font-body-md text-[14px] text-on-surface">{{ b.name }}</div>{% empty %}<p class="text-secondary font-body-md text-[13px]">None yet.</p>{% endfor %}
+            </div>
+            <form method="post" class="flex flex-col gap-sm border-t border-outline-variant pt-md">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="brand"/>
+                {% include "partials/_form_fields.html" with form=brand_form %}
+                <button type="submit" class="h-10 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Add Brand</button>
+            </form>
+        </section>
+
+        <section class="bg-surface-container-lowest rounded-xl p-lg shadow-sm flex flex-col gap-md">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Pigments</h2>
+            <div class="flex flex-col divide-y divide-outline-variant/60">
+                {% for p in pigments %}
+                <div class="py-2 flex items-center gap-sm">
+                    <span class="w-5 h-5 rounded border border-black/10 shrink-0" style="background-color: {{ p.hex_color }};"></span>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-body-md text-[14px] text-on-surface truncate">{{ p.code }} — {{ p.name }}</div>
+                        <div class="font-mono-data text-[11px] text-secondary">${{ p.cost_per_ml }}/ml</div>
+                    </div>
+                    <a href="{% url 'catalog:pigment_edit' p.pk %}" class="text-primary font-label-md text-[12px] hover:underline">Edit</a>
+                </div>
+                {% empty %}<p class="text-secondary font-body-md text-[13px]">None yet.</p>{% endfor %}
+            </div>
+            <form method="post" class="flex flex-col gap-sm border-t border-outline-variant pt-md">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="pigment"/>
+                {% include "partials/_form_fields.html" with form=pigment_form %}
+                <button type="submit" class="h-10 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Add Pigment</button>
+            </form>
+        </section>
+    </div>
+</div>
+</div>
+{% endblock %}

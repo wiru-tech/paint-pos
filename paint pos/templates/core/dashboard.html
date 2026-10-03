@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Dashboard - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-7xl mx-auto w-full flex flex-col gap-xl">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-sm">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">{{ greeting }}, {{ user.first_name|default:user.username }}</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5">
+                {% if branch %}{{ branch.name }} &middot; {% endif %}{% now "l, F j, Y" %}
+            </p>
+        </div>
+        <div class="flex items-center gap-sm">
+            {% if is_manager and branches %}
+            <form method="get" class="flex items-center gap-xs bg-surface-container-lowest border border-outline-variant rounded-lg px-sm h-9 shadow-sm">
+                <span class="material-symbols-outlined text-[16px] text-secondary">store</span>
+                <select name="branch" onchange="this.form.submit()" class="font-label-md text-label-md text-on-surface bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none py-0 pr-6">
+                    {% for b in branches %}
+                    <option value="{{ b.id }}" {% if branch and branch.id == b.id %}selected{% endif %}>{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
+            {% if open_sale %}
+            <a href="{% url 'sales:desk' %}" class="h-9 px-md bg-primary text-on-primary rounded-lg font-label-md text-label-md shadow-sm hover:bg-primary-container transition-colors flex items-center gap-xs w-fit">
+                <span class="material-symbols-outlined text-[16px]">point_of_sale</span>
+                Resume Sale — {{ open_sale.items.count }} item{{ open_sale.items.count|pluralize }}, ${{ open_sale.total|floatformat:2|intcomma }}
+            </a>
+            {% else %}
+            <a href="{% url 'sales:desk' %}" class="h-9 px-md bg-primary text-on-primary rounded-lg font-label-md text-label-md shadow-sm hover:bg-primary-container transition-colors flex items-center gap-xs w-fit">
+                <span class="material-symbols-outlined text-[16px]">add</span> Start New Sale
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not branch %}
+    <div class="bg-surface-container-lowest rounded-lg p-lg text-center shadow-sm">
+        <span class="material-symbols-outlined text-[32px] text-secondary">store</span>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold mt-sm">No Branch Assigned</h2>
+        <p class="font-body-md text-body-md text-secondary mt-xs max-w-sm mx-auto">Ask a manager to assign your account to a branch in the admin panel to see live stats and start ringing up sales.</p>
+    </div>
+    {% else %}
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-sm">
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Today's Sales</span>
+                <span class="material-symbols-outlined text-primary text-[15px]">point_of_sale</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">${{ today_sale_total|floatformat:2|intcomma }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">{{ today_sale_count }} sale{{ today_sale_count|pluralize }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Low Stock</span>
+                <span class="material-symbols-outlined text-amber-500 text-[15px]">warning</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ low_stock_total }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">items need reordering</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Out of Stock</span>
+                <span class="material-symbols-outlined text-error text-[15px]">production_quantity_limits</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ out_of_stock_count }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">at {{ branch.name }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Customers</span>
+                <span class="material-symbols-outlined text-tertiary text-[15px]">group</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ customer_count }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">on file network-wide</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-lg">
+        <section class="xl:col-span-2 bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col">
+            <div class="p-sm border-b border-outline-variant flex justify-between items-center">
+                <h2 class="font-headline-sm text-headline-sm text-on-surface">Recent Sales</h2>
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">{{ branch.name }}</span>
+            </div>
+            <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <tbody class="font-body-md text-on-surface">
+                    {% for sale in recent_sales %}
+                    <tr class="border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors">
+                        <td class="py-2 px-sm">
+                            <div class="font-mono-data text-[12px] text-on-surface font-medium">{{ sale.invoice_number }}</div>
+                            <div class="font-body-md text-[11px] text-secondary">{{ sale.completed_at|date:"M d, H:i" }} &middot; {{ sale.cashier.get_full_name|default:sale.cashier.username }}</div>
+                        </td>
+                        <td class="py-2 px-sm font-body-md text-[12px] text-secondary">{{ sale.customer.name|default:"Walk-in" }}</td>
+                        <td class="py-2 px-sm text-right font-mono-data text-[13px] font-semibold text-on-surface">${{ sale.total|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="py-6 px-sm text-center text-secondary font-body-md" colspan="3">No completed sales yet today.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+        <div class="flex flex-col gap-lg">
+            <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+                <div class="p-sm border-b border-outline-variant flex justify-between items-center">
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Top Sellers</h2>
+                    <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Last 30 days</span>
+                </div>
+                <div class="flex flex-col">
+                    {% for row in top_sellers %}
+                    <div class="flex items-center justify-between gap-xs px-sm py-xs border-b border-outline-variant last:border-b-0">
+                        <div class="flex items-center gap-xs min-w-0">
+                            <span class="w-5 h-5 shrink-0 rounded-full bg-primary-fixed text-primary font-mono-data text-[10px] font-bold flex items-center justify-center">{{ forloop.counter }}</span>
+                            <div class="min-w-0">
+                                <div class="font-body-md text-[12px] text-on-surface truncate">{{ row.product__name }}</div>
+                                <div class="font-mono-data text-[10px] text-secondary">{{ row.units|floatformat:0 }} sold</div>
+                            </div>
+                        </div>
+                        <span class="font-mono-data text-[12px] font-semibold text-on-surface shrink-0">${{ row.revenue|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="px-sm py-md text-center text-secondary font-body-md text-[12px]">No sales in the last 30 days yet.</div>
+                    {% endfor %}
+                </div>
+                {% if is_manager %}
+                <a href="{% url 'core:reports' %}" class="block px-sm py-2 border-t border-outline-variant text-primary font-label-md text-[11px] font-medium hover:bg-surface-container-low transition-colors text-center">Full Profit &amp; Loss report →</a>
+                {% endif %}
+            </section>
+
+            <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+                <div class="p-sm border-b border-outline-variant flex justify-between items-center">
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Needs Reordering</h2>
+                    <a href="{% url 'inventory:list' %}?status=low" class="text-primary font-body-md text-[12px] font-medium hover:text-primary-container transition-colors">View All</a>
+                </div>
+                <div class="flex flex-col">
+                    {% for level in low_stock_products %}
+                    <div class="flex items-center justify-between px-sm py-xs border-b border-outline-variant last:border-b-0">
+                        <div class="min-w-0">
+                            <div class="font-body-md text-[12px] text-on-surface truncate">{{ level.product.name }}</div>
+                            <div class="font-mono-data text-[10px] text-secondary">{{ level.product.sku }}</div>
+                        </div>
+                        <span class="font-mono-data text-[12px] font-semibold {% if level.quantity == 0 %}text-error{% else %}text-amber-600{% endif %}">{{ level.quantity }} left</span>
+                    </div>
+                    {% empty %}
+                    <div class="px-sm py-md text-center text-secondary font-body-md text-[12px]">All stocked up — nothing below threshold.</div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="bg-surface-container-lowest rounded-lg shadow-sm p-sm flex flex-col gap-xs">
+                <h2 class="font-headline-sm text-headline-sm text-on-surface mb-0.5">Quick Links</h2>
+                <a href="{% url 'inventory:list' %}" class="flex items-center gap-xs px-sm py-xs rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-primary text-[17px]">inventory_2</span>
+                    <span class="font-body-md text-body-md text-on-surface">Browse Inventory</span>
+                </a>
+                <a href="{% url 'customers:list' %}" class="flex items-center gap-xs px-sm py-xs rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-primary text-[17px]">history</span>
+                    <span class="font-body-md text-body-md text-on-surface">Customer History</span>
+                </a>
+                <a href="{% url 'inventory:transfer_list' %}" class="flex items-center justify-between gap-xs px-sm py-xs rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+                    <span class="flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-primary text-[17px]">swap_horiz</span>
+                        <span class="font-body-md text-body-md text-on-surface">Stock Transfers</span>
+                    </span>
+                    {% if pending_transfers %}<span class="min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error font-label-md text-[10px] flex items-center justify-center">{{ pending_transfers }}</span>{% endif %}
+                </a>
+                {% if is_manager %}
+                <a href="{% url 'inventory:purchase_orders' %}" class="flex items-center gap-xs px-sm py-xs rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-primary text-[17px]">local_shipping</span>
+                    <span class="font-body-md text-body-md text-on-surface">Purchase Orders</span>
+                </a>
+                <a href="{% url 'core:reports' %}" class="flex items-center gap-xs px-sm py-xs rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-primary text-[17px]">analytics</span>
+                    <span class="font-body-md text-body-md text-on-surface">Reports</span>
+                </a>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

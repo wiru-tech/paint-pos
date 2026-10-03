@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Receipt {{ order.reference }} - ChromaPOS{% endblock %}
+{% block extra_head %}
+<style>
+@media print {
+    nav, header, .no-print { display: none !important; }
+    #receipt-card { border: none !important; box-shadow: none !important; }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-xl flex justify-center bg-surface-container-low">
+    <div id="receipt-card" class="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-sm p-lg h-fit">
+        <div class="text-center mb-lg">
+            <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-sm mx-auto mb-sm">
+                <span class="material-symbols-outlined text-on-primary">local_shipping</span>
+            </div>
+            <h1 class="font-headline-md text-headline-md text-on-surface font-bold">ChromaPOS</h1>
+            <p class="font-body-md text-body-md text-secondary">Vendor Purchase Receipt &middot; {{ order.branch.name }}</p>
+        </div>
+
+        <div class="flex justify-between font-mono-data text-mono-data text-secondary mb-md">
+            <span>{{ order.reference }}</span>
+            <span>{{ order.received_at|default:order.created_at|date:"M d, Y H:i" }}</span>
+        </div>
+
+        <div class="flex justify-between items-start gap-sm mb-md">
+            <div class="font-body-md text-body-md text-secondary">
+                Bought from: <span class="text-on-surface font-medium">{{ order.supplier.name }}</span>
+                {% if order.supplier.contact_name %}<div class="text-[12px]">Attn: {{ order.supplier.contact_name }}</div>{% endif %}
+                {% if order.supplier.phone %}<div class="text-[12px]">{{ order.supplier.phone }}</div>{% endif %}
+                {% if order.supplier.email %}<div class="text-[12px]">{{ order.supplier.email }}</div>{% endif %}
+            </div>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-label-md text-[11px] border shrink-0
+                {% if order.status == 'received' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                {% elif order.status == 'cancelled' %}bg-red-50 text-red-700 border-red-100
+                {% elif order.status == 'ordered' %}bg-amber-50 text-amber-700 border-amber-100
+                {% else %}bg-surface-container text-on-surface-variant border-outline-variant{% endif %}">{{ order.get_status_display }}</span>
+        </div>
+
+        {% if order.created_by %}
+        <p class="font-body-md text-body-md text-secondary mb-md">Ordered by: {{ order.created_by.get_full_name|default:order.created_by.username }}</p>
+        {% endif %}
+
+        {% if order.status == 'cancelled' %}
+        <div class="mb-md px-md py-sm rounded-xl bg-error-container text-on-error-container font-body-md text-[13px]">
+            This order was cancelled — nothing was received into stock.
+        </div>
+        {% endif %}
+
+        <div class="border-t border-b border-outline-variant border-dashed py-md flex flex-col gap-sm mb-md">
+            {% for line in order.lines.all %}
+            <div class="flex justify-between gap-sm">
+                <div class="min-w-0">
+                    <div class="font-body-md text-body-md text-on-surface truncate">{{ line.product.name }}</div>
+                    <div class="font-mono-data text-[12px] text-secondary">
+                        {{ line.product.sku }} &middot; {{ line.quantity_ordered|floatformat:0 }} x ${{ line.unit_cost|floatformat:2 }}
+                        {% if line.quantity_received < line.quantity_ordered %}&middot; {{ line.quantity_received|floatformat:0 }} received{% endif %}
+                    </div>
+                </div>
+                <div class="font-mono-data text-mono-data text-on-surface shrink-0">${{ line.line_cost|floatformat:2|intcomma }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex flex-col gap-1 mb-lg">
+            <div class="flex justify-between font-body-md text-body-md text-secondary">
+                <span>Subtotal</span><span class="font-mono-data">${{ order.subtotal|floatformat:2|intcomma }}</span>
+            </div>
+            {% if order.standard_discount %}
+            <div class="flex justify-between font-body-md text-body-md text-secondary">
+                <span>Standard Discount{% if order.supplier.default_discount_percentage %} ({{ order.supplier.default_discount_percentage|floatformat:-2 }}%){% endif %}</span>
+                <span class="font-mono-data text-emerald-700">-${{ order.standard_discount|floatformat:2|intcomma }}</span>
+            </div>
+            {% endif %}
+            {% if order.manual_discount %}
+            <div class="flex justify-between font-body-md text-body-md text-secondary">
+                <span>Manual Discount <span class="text-[11px]">(from invoice)</span></span>
+                <span class="font-mono-data text-emerald-700">-${{ order.manual_discount|floatformat:2|intcomma }}</span>
+            </div>
+            {% endif %}
+            <div class="flex justify-between font-headline-sm text-headline-sm font-bold text-on-surface mt-xs">
+                <span>Grand Total</span><span class="font-mono-data">${{ order.grand_total|floatformat:2|intcomma }}</span>
+            </div>
+        </div>
+
+        <p class="text-center font-body-md text-[13px] text-secondary mb-lg">
+            {{ order.units_received }} of {{ order.units_ordered }} unit{{ order.units_ordered|pluralize }} received into {{ order.branch.name }}.
+        </p>
+
+        <div class="no-print flex gap-sm">
+            <button onclick="window.print()" class="flex-1 h-11 border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">print</span> Print Receipt
+            </button>
+            <a href="{% url 'inventory:purchase_order_detail' order.pk %}" class="flex-1 h-11 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center justify-center gap-xs">
+                Back to Order <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

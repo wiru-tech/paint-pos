@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sign In - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 flex items-center justify-center p-lg">
+    <div class="w-full max-w-sm bg-surface-container-lowest rounded-xl shadow-md p-xl flex flex-col items-center">
+        <div class="w-14 h-14 rounded-xl bg-primary flex items-center justify-center shadow-sm mb-md">
+            <span class="material-symbols-outlined text-on-primary text-[28px]">palette</span>
+        </div>
+        <h1 class="font-headline-md text-headline-md text-on-surface font-bold">ChromaPOS</h1>
+        <p class="font-body-md text-body-md text-secondary mt-xs mb-lg">Staff Sign In</p>
+
+        <form method="post" class="w-full flex flex-col gap-md">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="w-full px-md py-sm rounded-xl border border-error bg-error-container text-on-error-container font-body-md text-body-md">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+            <div class="w-full">
+                <label for="id_username" class="block font-label-md text-label-md text-on-surface-variant mb-xs">USERNAME</label>
+                <input id="id_username" name="username" type="text" autofocus required
+                       class="w-full h-12 px-sm rounded-xl bg-surface border border-outline-variant pos-input font-body-md text-body-md focus:ring-0"
+                       placeholder="e.g. cashier1" value="{{ form.username.value|default_if_none:'' }}"/>
+            </div>
+            <div class="w-full">
+                <label for="id_password" class="block font-label-md text-label-md text-on-surface-variant mb-xs">PASSWORD</label>
+                <input id="id_password" name="password" type="password" required
+                       class="w-full h-12 px-sm rounded-xl bg-surface border border-outline-variant pos-input font-body-md text-body-md focus:ring-0"
+                       placeholder="••••••••"/>
+            </div>
+            <input type="hidden" name="next" value="{{ next }}"/>
+            <button type="submit" class="w-full h-12 mt-xs bg-primary text-on-primary rounded-xl font-headline-sm text-headline-sm shadow-md hover:bg-primary-container transition-colors flex items-center justify-center gap-sm">
+                Sign In <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

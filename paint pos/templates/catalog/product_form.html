@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-xl mx-auto w-full">
+    <a href="{% if cancel_url %}{% url cancel_url %}{% else %}{% url 'catalog:product_list' %}{% endif %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-md">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to catalog
+    </a>
+    <div class="bg-surface-container-lowest rounded-xl p-lg shadow-sm">
+        <h1 class="font-headline-sm text-headline-sm text-on-surface mb-lg">{{ title }}</h1>
+        <form method="post" class="flex flex-col gap-md">
+            {% csrf_token %}
+            {% include "partials/_form_fields.html" with form=form %}
+            <div class="flex gap-sm mt-md">
+                <a href="{% if cancel_url %}{% url cancel_url %}{% else %}{% url 'catalog:product_list' %}{% endif %}" class="flex-1 h-11 border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center">Cancel</a>
+                <button type="submit" class="flex-1 h-11 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}

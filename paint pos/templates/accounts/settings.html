@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Settings - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-4xl mx-auto w-full flex flex-col gap-md">
+
+    <div>
+        <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Settings</h1>
+        <p class="font-body-md text-on-surface-variant mt-0.5 text-[13px]">
+            Signed in as <span class="font-medium text-on-surface">{{ user.username }}</span>
+            &middot; {{ user.profile.get_role_display }}
+            &middot; {{ user.profile.branch.name|default:"No branch assigned" }}
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-md">
+        <section class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Your Details</h2>
+            <form method="post" class="flex flex-col gap-sm">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="details"/>
+                {% include "partials/_form_fields.html" with form=details_form %}
+                <button type="submit" class="self-start h-8 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Save Details</button>
+            </form>
+        </section>
+
+        <section class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Change Password</h2>
+            <form method="post" class="flex flex-col gap-sm">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="password"/>
+                {% include "partials/_form_fields.html" with form=password_form %}
+                <button type="submit" class="self-start h-8 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Update Password</button>
+            </form>
+        </section>
+    </div>
+
+    {% if is_manager %}
+    <section class="bg-surface-container-lowest rounded-lg p-sm shadow-sm flex items-center justify-between gap-sm">
+        <div>
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Staff Accounts</h2>
+            <p class="font-body-md text-[12px] text-secondary mt-0.5">Create logins, set Cashier/Manager roles and assign branches.</p>
+        </div>
+        <a href="{% url 'accounts:staff_list' %}" class="h-8 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs shrink-0">
+            <span class="material-symbols-outlined text-[15px]">group</span> Manage Staff
+        </a>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Tinting Desk Policy</h2>
+        {% if branch %}
+        <p class="font-body-md text-[12px] text-secondary mt-0.5 mb-sm">Applies to cashiers at {{ branch.name }}. Managers can always custom mix.</p>
+        <form method="post" class="flex items-center justify-between gap-md p-sm rounded-lg border border-outline-variant">
+            {% csrf_token %}
+            <input type="hidden" name="form" value="tinting_policy"/>
+            <div>
+                <div class="font-body-md text-[13px] font-medium text-on-surface">Allow Custom Hex/Shot Mixes</div>
+                <div class="font-body-md text-[11px] text-secondary">OFF: cashiers can only add colors from the Color Menu — manual HEX/RGB entry locks for them.</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" name="allow_custom_mixes" value="1" {% if branch.allow_custom_mixes %}checked{% endif %} onchange="this.form.submit()" class="sr-only peer"/>
+                <div class="w-10 h-6 bg-surface-container-high rounded-full peer peer-checked:bg-tertiary transition-colors"></div>
+                <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            </label>
+        </form>
+        {% else %}
+        <p class="font-body-md text-[12px] text-secondary mt-0.5">Assign yourself a branch to set this policy.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

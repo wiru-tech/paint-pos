@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}Warehouses - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1300px] mx-auto w-full">
+    <a href="{% url 'inventory:list' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Inventory
+    </a>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-sm mb-md">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Warehouses</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5 text-[13px]">Central storage locations — separate from retail branches, but stock still transfers between the two.</p>
+        </div>
+        <form method="get" class="flex items-center gap-xs">
+            <label class="font-label-md text-label-md text-on-surface-variant whitespace-nowrap">View stock for branch</label>
+            <select name="branch" onchange="this.form.submit()" class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[13px]">
+                <option value="">— Select a branch —</option>
+                {% for b in branches %}<option value="{{ b.id }}" {% if selected_branch and selected_branch.id == b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if selected_branch %}
+    <div class="bg-surface-container-lowest rounded-lg shadow-sm p-sm mb-md flex flex-wrap items-center gap-lg">
+        <div class="flex items-center gap-1.5 font-headline-sm text-headline-sm text-on-surface">
+            <span class="material-symbols-outlined text-[18px] text-secondary">store</span> {{ selected_branch.name }}
+        </div>
+        <div>
+            <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Total Stock</div>
+            <div class="font-mono-data text-[15px] font-semibold text-on-surface">{{ branch_summary.total_stock|intcomma }}</div>
+        </div>
+        <div>
+            <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Base Cans</div>
+            <div class="font-mono-data text-[15px] font-semibold text-on-surface">{{ branch_summary.base_cans|intcomma }}</div>
+        </div>
+        <div>
+            <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Low / Out of Stock Lines</div>
+            <div class="font-mono-data text-[15px] font-semibold {% if branch_summary.low_stock_lines %}text-error{% endif %}">{{ branch_summary.low_stock_lines }}</div>
+        </div>
+        <p class="font-body-md text-[12px] text-secondary ml-auto">Click "Transfer" on any line below — {{ selected_branch.name }} is pre-selected as the destination.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-md mb-md">
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+            <div class="px-3 py-2 border-b border-outline-variant flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px] text-secondary">inventory_2</span>
+                <h2 class="font-headline-sm text-headline-sm text-on-surface">Everything in the Warehouse — Products</h2>
+            </div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-lowest border-b border-outline-variant sticky top-0">
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Product</th>
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">In Warehouse</th>
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">At {{ selected_branch.name }}</th>
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="font-body-md text-[12px] text-on-surface">
+                    {% for row in warehouse_stock_rows %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors h-10">
+                        <td class="px-3 py-1">
+                            <div class="font-medium">{{ row.product.name }}</div>
+                            <div class="font-mono-data text-[10px] text-secondary">{{ row.product.sku }} · {{ row.warehouse.name }}</div>
+                        </td>
+                        <td class="px-3 py-1 text-right font-mono-data font-semibold">{{ row.warehouse_qty|intcomma }}</td>
+                        <td class="px-3 py-1 text-right font-mono-data text-secondary">{{ row.branch_qty|intcomma }}</td>
+                        <td class="px-3 py-1 text-center">
+                            <button type="button" data-action="open-warehouse-transfer" data-branch-id="{{ row.warehouse.id }}" data-branch-name="{{ row.warehouse.name }}"
+                                    data-product-id="{{ row.product.id }}" data-to-branch-id="{{ selected_branch.id }}"
+                                    class="h-6 px-2 rounded-md border border-outline-variant text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center gap-1 font-label-md text-[10px]">
+                                <span class="material-symbols-outlined text-[12px]">local_shipping</span> Transfer
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="px-3 py-6 text-center text-secondary font-body-md">Nothing in stock at any warehouse.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+            <div class="px-3 py-2 border-b border-outline-variant flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px] text-secondary">colorize</span>
+                <h2 class="font-headline-sm text-headline-sm text-on-surface">Everything in the Warehouse — Pigments</h2>
+            </div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-lowest border-b border-outline-variant sticky top-0">
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Pigment</th>
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Warehouse</th>
+                        <th class="px-3 py-1.5 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">Volume</th>
+                    </tr>
+                </thead>
+                <tbody class="font-body-md text-[12px] text-on-surface">
+                    {% for row in warehouse_pigment_rows %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors h-10">
+                        <td class="px-3 py-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full border border-outline-variant shrink-0" style="background-color: {{ row.pigment.hex_color }};"></span>
+                                <span class="font-medium">{{ row.pigment.name }}</span>
+                                <span class="font-mono-data text-[10px] text-secondary">({{ row.pigment.code }})</span>
+                            </div>
+                        </td>
+                        <td class="px-3 py-1 text-secondary">{{ row.warehouse.name }}</td>
+                        <td class="px-3 py-1 text-right font-mono-data font-semibold">{{ row.volume_ml|floatformat:0|intcomma }} ml</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="px-3 py-6 text-center text-secondary font-body-md">No pigment stock at any warehouse.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-surface-container-lowest border-b border-outline-variant">
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Warehouse</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider">Location</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">Total Stock</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">Base Cans</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-right">Pigment Volume</th>
+                    <th class="px-3 py-2 font-label-md text-[10px] font-semibold uppercase text-on-surface-variant tracking-wider text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody class="font-mono-data text-[12px] text-on-surface">
+                {% for row in rows %}
+                <tr class="border-b border-outline-variant/60 hover:bg-surface-container-low transition-colors h-11">
+                    <td class="px-3 py-1.5">
+                        <div class="font-body-md text-[13px] font-medium text-on-background flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px] text-secondary">warehouse</span>
+                            {{ row.warehouse.name }}
+                        </div>
+                    </td>
+                    <td class="px-3 py-1.5 font-body-md text-[13px] text-on-surface-variant">{{ row.warehouse.address|default:"—" }}</td>
+                    <td class="px-3 py-1.5 text-right font-semibold">{{ row.total_stock|intcomma }}</td>
+                    <td class="px-3 py-1.5 text-right">{{ row.base_cans|intcomma }}</td>
+                    <td class="px-3 py-1.5 text-right">{{ row.pigment_volume_ml|floatformat:0|intcomma }} ml</td>
+                    <td class="px-3 py-1.5 text-center">
+                        <button type="button" data-action="open-warehouse-transfer" data-branch-id="{{ row.warehouse.id }}" data-branch-name="{{ row.warehouse.name }}"
+                                class="h-7 px-sm rounded-md border border-outline-variant text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center gap-1 font-label-md text-label-md">
+                            <span class="material-symbols-outlined text-[14px]">local_shipping</span> Transfer to Branch
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-3 py-8 text-center text-secondary font-body-md">No warehouses set up yet — add one in the Django admin (Branch, with "Is warehouse" checked).</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+</div>
+
+<div id="warehouse-transfer-modal" class="hidden fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-lg">
+    <div class="bg-surface-container-lowest rounded-lg shadow-md w-full max-w-xs p-md">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold mb-xs">Transfer Stock to Branch</h3>
+        <p id="warehouse-transfer-branch-name" class="font-body-md text-body-md text-secondary mb-sm"></p>
+        <form method="post" action="{% url 'inventory:transfer' %}" class="flex flex-col gap-xs">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
+            <input type="hidden" id="warehouse-transfer-from-branch" name="from_branch" value=""/>
+            <label class="font-label-md text-label-md text-on-surface-variant">PRODUCT</label>
+            <select name="product_id" required class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md">
+                {% for p in products %}<option value="{{ p.id }}">{{ p.name }} ({{ p.sku }})</option>{% endfor %}
+            </select>
+            <label class="font-label-md text-label-md text-on-surface-variant">TO BRANCH</label>
+            <select name="to_branch" required class="h-8 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md">
+                {% for b in branches %}<option value="{{ b.id }}" {% if selected_branch and selected_branch.id == b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+            </select>
+            <label class="font-label-md text-label-md text-on-surface-variant">QUANTITY</label>
+            <input type="number" name="quantity" min="1" required class="h-8 px-sm rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-mono-data"/>
+            <div class="flex gap-xs mt-sm">
+                <button type="button" data-action="close-warehouse-transfer" class="flex-1 h-9 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 h-9 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Confirm Transfer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'chromapos/js/inventory.js' %}"></script>
+{% endblock %}

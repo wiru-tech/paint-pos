@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Reports - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1400px] mx-auto w-full flex flex-col gap-md">
+
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-sm">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Reports</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5">
+                {{ start|date:"M j, Y" }} – {{ end|date:"M j, Y" }} ({{ day_span }} day{{ day_span|pluralize }})
+                &middot; {{ branch.name|default:"All branches" }}
+            </p>
+        </div>
+        <form method="get" class="flex flex-wrap items-center gap-xs">
+            <input type="date" name="from" value="{{ start|date:'Y-m-d' }}" class="h-7 px-sm py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]"/>
+            <input type="date" name="to" value="{{ end|date:'Y-m-d' }}" class="h-7 px-sm py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]"/>
+            <select name="branch" class="h-7 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+                <option value="">All branches</option>
+                {% for b in branches %}<option value="{{ b.id }}" {% if branch and branch.id == b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="h-7 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Apply</button>
+            <div class="flex items-center border border-outline-variant rounded-lg overflow-hidden h-7">
+                <a href="{% url 'core:reports_export' %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}{% if branch %}&branch={{ branch.id }}{% endif %}&format=csv"
+                   title="Export CSV" class="h-full px-sm flex items-center gap-1 hover:bg-surface-container-low transition-colors border-r border-outline-variant font-label-md text-label-md">
+                    <span class="material-symbols-outlined text-[14px]">download</span> CSV
+                </a>
+                <a href="{% url 'core:reports_export' %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}{% if branch %}&branch={{ branch.id }}{% endif %}&format=xlsx"
+                   title="Export Excel (.xlsx)" class="h-full px-sm flex items-center gap-1 hover:bg-surface-container-low transition-colors border-r border-outline-variant font-label-md text-label-md">
+                    <span class="material-symbols-outlined text-[14px]">table_view</span> XLS
+                </a>
+                <a href="{% url 'core:reports_export' %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}{% if branch %}&branch={{ branch.id }}{% endif %}&format=pdf"
+                   title="Export PDF" class="h-full px-sm flex items-center gap-1 hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                    <span class="material-symbols-outlined text-[14px]">picture_as_pdf</span> PDF
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-sm">
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Revenue</span>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface mt-0.5">${{ revenue|floatformat:2|intcomma }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">incl. ${{ tax|floatformat:2|intcomma }} tax</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Sales</span>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface mt-0.5">{{ sale_count|intcomma }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">avg ${{ average_sale|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Units Sold</span>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface mt-0.5">{{ units_sold|floatformat:0|intcomma }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">{{ tint_jobs }} custom tint job{{ tint_jobs|pluralize }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Voided</span>
+            <p class="font-mono-data text-[18px] font-bold {% if void_count %}text-error{% else %}text-on-surface{% endif %} mt-0.5">{{ void_count }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">${{ void_value|floatformat:2|intcomma }} reversed</p>
+        </div>
+    </div>
+
+    <section class="bg-surface-container-lowest rounded-lg shadow-sm p-sm">
+        <div class="flex items-center justify-between mb-sm">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Profit &amp; Loss</h2>
+            {% if not has_cost_data %}
+            <span class="font-label-md text-[10px] text-secondary bg-surface-container-high px-2 py-0.5 rounded-full uppercase tracking-wide">Add product costs for full accuracy</span>
+            {% endif %}
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-sm">
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Net Sales</p>
+                <p class="font-mono-data text-[16px] font-semibold text-on-surface">${{ net_sales|floatformat:2|intcomma }}</p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Cost of Goods</p>
+                <p class="font-mono-data text-[16px] font-semibold text-on-surface">${{ cost_of_goods|floatformat:2|intcomma }}</p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Gross Profit</p>
+                <p class="font-mono-data text-[16px] font-bold {% if is_loss_period %}text-error{% else %}text-tertiary{% endif %}">
+                    {% if is_loss_period %}&minus;{% endif %}${{ gross_profit|floatformat:2|intcomma }}
+                </p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Margin</p>
+                <p class="font-mono-data text-[16px] font-semibold {% if is_loss_period %}text-error{% else %}text-on-surface{% endif %}">
+                    {% if gross_margin_percent != None %}{{ gross_margin_percent|floatformat:1 }}%{% else %}—{% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Discounts Given</p>
+                <p class="font-mono-data text-[16px] font-semibold text-on-surface">${{ total_discount|floatformat:2|intcomma }}</p>
+                <p class="font-body-md text-[10px] text-secondary">${{ order_discount_total|floatformat:2 }} order · ${{ line_discount_total|floatformat:2 }} line</p>
+            </div>
+        </div>
+        {% if is_loss_period %}
+        <div class="mt-sm px-sm py-xs rounded-lg bg-error-container text-on-error-container font-body-md text-[12px] flex items-center gap-xs">
+            <span class="material-symbols-outlined text-[16px]">warning</span>
+            This period sold at a loss overall — cost of goods was higher than net sales.
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-lg shadow-sm p-sm">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Revenue by Day</h2>
+        <div class="flex items-end gap-1 h-32 overflow-x-auto">
+            {% for day in by_day %}
+            <div class="flex-1 min-w-[6px] flex flex-col items-center justify-end h-full group relative"
+                 title="{{ day.day|date:'M j' }}: ${{ day.revenue|floatformat:2 }} ({{ day.count }} sale{{ day.count|pluralize }})">
+                <div class="w-full rounded-t {% if day.revenue %}bg-primary{% else %}bg-surface-container-high{% endif %}" style="height: {{ day.bar_percent }}%; min-height: 2px;"></div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between font-mono-data text-[10px] text-secondary mt-xs">
+            <span>{{ start|date:"M j" }}</span><span>{{ end|date:"M j" }}</span>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-md">
+        <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+            <div class="p-sm border-b border-outline-variant"><h2 class="font-headline-sm text-headline-sm text-on-surface">Best-Selling Products</h2></div>
+            <table class="w-full text-left border-collapse font-body-md text-[13px]">
+                <thead>
+                    <tr class="border-b border-outline-variant font-label-md text-[10px] text-secondary uppercase tracking-wider">
+                        <th class="px-sm py-1.5 font-semibold">Product</th>
+                        <th class="px-xs py-1.5 font-semibold text-right">Units</th>
+                        <th class="px-xs py-1.5 font-semibold text-right">Revenue</th>
+                        <th class="px-sm py-1.5 font-semibold text-right">Margin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in top_products %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0">
+                        <td class="px-sm py-1.5">
+                            <div class="text-on-surface">{{ row.product__name }}</div>
+                            <div class="font-mono-data text-[11px] text-secondary">{{ row.product__sku }}</div>
+                        </td>
+                        <td class="px-xs py-1.5 text-right font-mono-data text-secondary">{{ row.units|floatformat:0 }}</td>
+                        <td class="px-xs py-1.5 text-right font-mono-data font-semibold">${{ row.revenue|floatformat:2|intcomma }}</td>
+                        <td class="px-sm py-1.5 text-right font-mono-data {% if row.profit < 0 %}text-error{% else %}text-tertiary{% endif %}">
+                            {% if row.margin_percent != None %}{{ row.margin_percent|floatformat:0 }}%{% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="px-sm py-6 text-center text-secondary">No sales in this period.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        {% if losing_products %}
+        <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+            <div class="p-sm border-b border-outline-variant flex items-center gap-xs">
+                <span class="material-symbols-outlined text-error text-[18px]">trending_down</span>
+                <h2 class="font-headline-sm text-headline-sm text-on-surface">Losing Money</h2>
+            </div>
+            <table class="w-full text-left border-collapse font-body-md text-[13px]">
+                <tbody>
+                    {% for row in losing_products %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0">
+                        <td class="px-sm py-1.5">
+                            <div class="text-on-surface">{{ row.product__name }}</div>
+                            <div class="font-mono-data text-[11px] text-secondary">{{ row.product__sku }} · {{ row.units|floatformat:0 }} sold</div>
+                        </td>
+                        <td class="px-xs py-1.5 text-right font-mono-data text-secondary">${{ row.revenue|floatformat:2 }} rev</td>
+                        <td class="px-sm py-1.5 text-right font-mono-data font-semibold text-error">&minus;${{ row.loss|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+
+        {% if dead_stock %}
+        <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+            <div class="p-sm border-b border-outline-variant flex items-center justify-between">
+                <div class="flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-secondary text-[18px]">hourglass_empty</span>
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Slow-Moving Stock</h2>
+                </div>
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">{{ dead_stock|length }} product{{ dead_stock|length|pluralize }} · no sale in {{ dead_stock_days }}+ days</span>
+            </div>
+            <div class="max-h-[420px] overflow-y-auto">
+            <table class="w-full text-left border-collapse font-body-md text-[13px]">
+                <thead>
+                    <tr class="border-b border-outline-variant font-label-md text-[10px] text-secondary uppercase tracking-wider bg-surface-container-lowest sticky top-0">
+                        <th class="px-sm py-1.5 font-semibold">Product</th>
+                        <th class="px-xs py-1.5 font-semibold text-right">In Stock</th>
+                        <th class="px-xs py-1.5 font-semibold text-right">Idle For</th>
+                        <th class="px-sm py-1.5 font-semibold text-right">Tied Up</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in dead_stock %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0">
+                        <td class="px-sm py-1.5">
+                            <div class="text-on-surface">{{ row.product.name }}</div>
+                            <div class="font-mono-data text-[11px] text-secondary">{{ row.product.sku }}</div>
+                        </td>
+                        <td class="px-xs py-1.5 text-right font-mono-data text-secondary">{{ row.stock_qty }}</td>
+                        <td class="px-xs py-1.5 text-right font-mono-data {% if row.never_sold %}text-error{% else %}text-secondary{% endif %}">
+                            {% if row.never_sold %}Never sold{% else %}{{ row.days_idle }}d{% endif %}
+                        </td>
+                        <td class="px-sm py-1.5 text-right font-mono-data font-semibold">${{ row.tied_up_value|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <div class="px-sm py-2 border-t border-outline-variant font-body-md text-[11px] text-secondary">
+                ${{ dead_stock_value|floatformat:2|intcomma }} tied up in slow-moving stock, total.
+            </div>
+        </section>
+        {% endif %}
+
+        <div class="flex flex-col gap-md">
+            <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+                <div class="p-sm border-b border-outline-variant"><h2 class="font-headline-sm text-headline-sm text-on-surface">Payment Mix</h2></div>
+                <table class="w-full text-left border-collapse font-body-md text-[13px]">
+                    <tbody>
+                        {% for row in payment_mix %}
+                        <tr class="border-b border-outline-variant/60 last:border-b-0">
+                            <td class="px-sm py-1.5 text-on-surface">{{ row.label }}</td>
+                            <td class="px-xs py-1.5 text-right font-mono-data text-secondary">{{ row.count }}x</td>
+                            <td class="px-sm py-1.5 text-right font-mono-data font-semibold">${{ row.amount|floatformat:2|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="px-sm py-6 text-center text-secondary">No payments recorded.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+                <div class="p-sm border-b border-outline-variant flex justify-between items-center">
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface">{% if branch %}Cashiers{% else %}Branches{% endif %}</h2>
+                    <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">{{ low_stock_count }} low · {{ out_of_stock_count }} out</span>
+                </div>
+                <table class="w-full text-left border-collapse font-body-md text-[13px]">
+                    <tbody>
+                        {% if branch %}
+                            {% for row in by_cashier %}
+                            <tr class="border-b border-outline-variant/60 last:border-b-0">
+                                <td class="px-sm py-1.5 text-on-surface">{{ row.cashier__username }}</td>
+                                <td class="px-xs py-1.5 text-right font-mono-data text-secondary">{{ row.count }} sale{{ row.count|pluralize }}</td>
+                                <td class="px-sm py-1.5 text-right font-mono-data font-semibold">${{ row.revenue|floatformat:2|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td class="px-sm py-6 text-center text-secondary">No sales in this period.</td></tr>
+                            {% endfor %}
+                        {% else %}
+                            {% for row in by_branch %}
+                            <tr class="border-b border-outline-variant/60 last:border-b-0">
+                                <td class="px-sm py-1.5 text-on-surface">{{ row.branch__name }}</td>
+                                <td class="px-xs py-1.5 text-right font-mono-data text-secondary">{{ row.count }} sale{{ row.count|pluralize }}</td>
+                                <td class="px-sm py-1.5 text-right font-mono-data font-semibold">${{ row.revenue|floatformat:2|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td class="px-sm py-6 text-center text-secondary">No sales in this period.</td></tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

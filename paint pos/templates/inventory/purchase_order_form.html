@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}New Purchase Order - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-4xl mx-auto w-full">
+    <a href="{% url 'inventory:purchase_orders' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Purchase Orders
+    </a>
+    <h1 class="font-headline-md text-headline-md text-on-background tracking-tight mb-lg">New Purchase Order</h1>
+
+    <form method="post" class="flex flex-col gap-lg">
+        {% csrf_token %}
+        <section class="bg-surface-container-lowest rounded-xl p-lg shadow-sm flex flex-col gap-md">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[18px] text-primary">assignment</span> Order Details
+            </h2>
+            {% include "partials/_form_fields.html" with form=form %}
+            <div id="vendor-discount-hint" class="hidden flex items-center gap-1.5 -mt-1">
+                <span id="vendor-discount-badge" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-label-md text-[11px] font-semibold">
+                    <span class="material-symbols-outlined text-[13px]">sell</span>
+                    <span id="vendor-discount-hint-text"></span>
+                </span>
+                <span class="font-body-md text-[12px] text-secondary">standard discount, applied automatically</span>
+            </div>
+        </section>
+
+        <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+            <div class="p-lg border-b border-outline-variant">
+                <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[18px] text-primary">playlist_add_check</span>
+                    Suggested Reorders{% if branch %} — {{ branch.name }}{% endif %}
+                </h2>
+                <p class="font-body-md text-[13px] text-secondary mt-1">Pre-filled from items at or below their reorder threshold. Set a quantity of 0 to skip a line.</p>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+                        <th class="px-5 py-3 font-semibold">Product</th>
+                        <th class="px-5 py-3 font-semibold text-right">On Hand</th>
+                        <th class="px-5 py-3 font-semibold text-right">Threshold</th>
+                        <th class="px-5 py-3 font-semibold text-right">Order Qty</th>
+                        <th class="px-5 py-3 font-semibold text-right">Unit Cost</th>
+                        <th class="px-5 py-3 font-semibold text-right">Disc %</th>
+                        <th class="px-5 py-3 font-semibold text-right">Line Total</th>
+                        <th class="px-5 py-3 font-semibold w-8"></th>
+                    </tr>
+                </thead>
+                <tbody class="font-body-md text-[14px] text-on-surface">
+                    {% for row in suggestions %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0 transition-colors" data-line-row>
+                        <td class="px-5 py-2">
+                            <div>{{ row.product.name }}</div>
+                            <div class="font-mono-data text-[12px] text-secondary">{{ row.product.sku }}</div>
+                        </td>
+                        <td class="px-5 py-2 text-right font-mono-data {% if not row.quantity %}text-error{% endif %}">{{ row.quantity }}</td>
+                        <td class="px-5 py-2 text-right font-mono-data text-secondary">{{ row.threshold }}</td>
+                        <td class="px-5 py-2 text-right">
+                            <input type="number" name="qty_{{ row.product.id }}" min="0" value="{{ row.suggested }}" data-line-qty
+                                   class="h-9 w-24 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[13px]"/>
+                        </td>
+                        <td class="px-5 py-2 text-right">
+                            <input type="number" step="0.01" min="0" name="cost_{{ row.product.id }}" value="{{ row.product.unit_price }}" data-line-cost
+                                   class="h-9 w-24 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[13px]"/>
+                        </td>
+                        <td class="px-5 py-2 text-right">
+                            <input type="number" step="0.01" min="0" max="100" name="disc_{{ row.product.id }}" value="0" placeholder="0"
+                                   class="h-9 w-16 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[13px]"/>
+                        </td>
+                        <td class="px-5 py-2 text-right font-mono-data font-semibold text-on-surface" data-line-total>$0.00</td>
+                        <td class="px-5 py-2 text-center">
+                            <button type="button" data-action="clear-line" title="Remove from order" class="w-7 h-7 rounded-md text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors inline-flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="px-5 py-8 text-center text-secondary">Nothing is below its reorder threshold at this branch.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <details open class="bg-surface-container-lowest rounded-xl shadow-sm">
+            <summary class="p-lg cursor-pointer font-headline-sm text-headline-sm text-on-surface flex items-center justify-between gap-sm">
+                <span class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[18px] text-primary">add_box</span> Add any other product
+                </span>
+                <span id="other-products-selected-badge" class="hidden font-label-md text-[11px] px-2 py-0.5 rounded-full bg-primary-container/40 text-primary">0 selected</span>
+            </summary>
+            <div class="px-lg pb-2">
+                <input type="text" id="other-products-search" placeholder="Search by product name or SKU..."
+                       class="h-9 w-full px-sm rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[13px]"/>
+            </div>
+            <div id="other-products-list" class="px-lg pb-lg max-h-96 overflow-y-auto flex flex-col">
+                {% for group in other_product_groups %}
+                <div class="other-product-group">
+                    <div class="sticky top-0 bg-surface-container-lowest py-1 font-label-md text-[10px] font-semibold uppercase text-secondary tracking-wider">{{ group.name }}</div>
+                    {% for product in group.products %}
+                    <div class="other-product-row py-2 flex items-center gap-md border-b border-outline-variant/60 last:border-b-0 rounded-md transition-colors" data-line-row
+                         data-search="{{ product.name|lower }} {{ product.sku|lower }}">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-body-md text-[14px] truncate">{{ product.name }}</div>
+                            <div class="font-mono-data text-[12px] text-secondary">{{ product.sku }}</div>
+                        </div>
+                        <input type="number" name="qty_{{ product.id }}" min="0" placeholder="0" data-other-product-qty="1" data-line-qty
+                               class="h-9 w-20 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[13px]"/>
+                        <input type="number" step="0.01" min="0" name="cost_{{ product.id }}" value="{{ product.unit_price }}" data-line-cost
+                               class="h-9 w-24 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[13px]"/>
+                        <input type="number" step="0.01" min="0" max="100" name="disc_{{ product.id }}" value="0" placeholder="Disc %"
+                               class="h-9 w-20 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[13px]"/>
+                        <span class="w-20 text-right font-mono-data text-[13px] font-semibold text-on-surface shrink-0" data-line-total>$0.00</span>
+                        <button type="button" data-action="clear-line" title="Remove from order" class="w-7 h-7 rounded-md text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors inline-flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <p class="text-secondary font-body-md text-[13px] py-4 text-center">No other products available.</p>
+                {% endfor %}
+            </div>
+        </details>
+
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm p-lg">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5 mb-sm">
+                <span class="material-symbols-outlined text-[18px] text-primary">calculate</span> Order Summary
+            </h2>
+            <div class="flex flex-col gap-2 max-w-sm ml-auto">
+                <div class="flex justify-between font-body-md text-[13px] text-secondary">
+                    <span>Items selected</span>
+                    <span class="font-mono-data text-on-surface" id="summary-item-count">0</span>
+                </div>
+                <div class="flex justify-between font-body-md text-[13px] text-secondary">
+                    <span>Subtotal</span>
+                    <span class="font-mono-data text-on-surface" id="summary-subtotal">$0.00</span>
+                </div>
+                <div id="summary-discount-row" class="hidden flex justify-between font-body-md text-[13px] text-secondary">
+                    <span>Standard Discount <span id="summary-discount-rate" class="font-mono-data text-[11px]"></span></span>
+                    <span class="font-mono-data text-emerald-700" id="summary-discount">-$0.00</span>
+                </div>
+                <div class="flex justify-between items-center font-body-md text-[13px] text-secondary gap-sm">
+                    <span class="shrink-0">Manual Discount <span class="text-[11px]">(from invoice)</span></span>
+                    <span class="flex items-center gap-1">
+                        <span class="font-mono-data text-on-surface-variant">$</span>
+                        <input type="number" step="0.01" min="0" name="manual_discount" id="id_manual_discount" value="0"
+                               class="h-8 w-24 px-2 text-right rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-mono-data text-[13px]"/>
+                    </span>
+                </div>
+                <div id="summary-savings-row" class="hidden flex justify-between items-center">
+                    <span class="font-body-md text-[13px] text-secondary">Total Savings</span>
+                    <span id="summary-savings" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-label-md text-[12px] font-bold">$0.00</span>
+                </div>
+                <div class="flex justify-between font-headline-sm text-headline-sm font-bold text-on-surface pt-2 border-t border-outline-variant">
+                    <span>Grand Total</span>
+                    <span class="font-mono-data" id="summary-total">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-sm">
+            <a href="{% url 'inventory:purchase_orders' %}" class="flex-1 h-11 border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center">Cancel</a>
+            <button type="submit" class="flex-1 h-11 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors">Create Order</button>
+        </div>
+        <script>
+        (function () {
+            const search = document.getElementById('other-products-search');
+            const list = document.getElementById('other-products-list');
+            const badge = document.getElementById('other-products-selected-badge');
+            if (!list) return;
+
+            function updateBadge() {
+                const count = list.querySelectorAll('[data-other-product-qty]').length
+                    ? [...list.querySelectorAll('[data-other-product-qty]')].filter((el) => parseFloat(el.value) > 0).length
+                    : 0;
+                if (count > 0) {
+                    badge.textContent = `${count} selected`;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
+            list.addEventListener('input', (e) => {
+                if (!e.target.matches('[data-other-product-qty]')) return;
+                const row = e.target.closest('.other-product-row');
+                if (row) row.classList.toggle('bg-primary-container/20', parseFloat(e.target.value) > 0);
+                updateBadge();
+            });
+
+            if (search) {
+                search.addEventListener('input', () => {
+                    const q = search.value.trim().toLowerCase();
+                    list.querySelectorAll('.other-product-group').forEach((group) => {
+                        let anyVisible = false;
+                        group.querySelectorAll('.other-product-row').forEach((row) => {
+                            const match = !q || row.dataset.search.includes(q);
+                            row.classList.toggle('hidden', !match);
+                            if (match) anyVisible = true;
+                        });
+                        group.classList.toggle('hidden', !anyVisible);
+                    });
+                });
+            }
+
+            updateBadge();
+        })();
+        </script>
+        <script>
+        (function () {
+            const discounts = {
+                {% for s in form.fields.supplier.queryset %}{{ s.id }}: {{ s.default_discount_percentage|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}
+            };
+            const select = document.getElementById('id_supplier');
+            const hint = document.getElementById('vendor-discount-hint');
+            const hintText = document.getElementById('vendor-discount-hint-text');
+            const manualInput = document.getElementById('id_manual_discount');
+
+            const itemCountEl = document.getElementById('summary-item-count');
+            const subtotalEl = document.getElementById('summary-subtotal');
+            const discountRow = document.getElementById('summary-discount-row');
+            const discountRateEl = document.getElementById('summary-discount-rate');
+            const discountEl = document.getElementById('summary-discount');
+            const savingsRow = document.getElementById('summary-savings-row');
+            const savingsEl = document.getElementById('summary-savings');
+            const totalEl = document.getElementById('summary-total');
+
+            const money = (n) => `$${n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+
+            function updateHint(rate) {
+                if (!hint) return;
+                if (rate > 0) {
+                    hintText.textContent = `${rate}%`;
+                    hint.classList.remove('hidden');
+                } else {
+                    hint.classList.add('hidden');
+                }
+            }
+
+            function updateSummary() {
+                let subtotal = 0;
+                let items = 0;
+                document.querySelectorAll('[data-line-qty]').forEach((qtyInput) => {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    const row = qtyInput.closest('[data-line-row]');
+                    const productId = qtyInput.name.slice(4);
+                    const costInput = document.querySelector(`input[name="cost_${productId}"]`);
+                    const cost = costInput ? (parseFloat(costInput.value) || 0) : 0;
+                    const lineTotal = qty * cost;
+                    const lineTotalEl = row ? row.querySelector('[data-line-total]') : null;
+                    if (lineTotalEl) lineTotalEl.textContent = money(lineTotal);
+
+                    if (qty <= 0) {
+                        if (row) row.classList.remove('bg-primary-container/20');
+                        return;
+                    }
+                    if (row) row.classList.add('bg-primary-container/20');
+                    items += 1;
+                    subtotal += lineTotal;
+                });
+
+                const rate = select ? parseFloat(discounts[select.value]) || 0 : 0;
+                const standardDiscount = subtotal * rate / 100;
+                const manualMax = Math.max(0, subtotal - standardDiscount);
+                let manualDiscount = manualInput ? Math.max(0, parseFloat(manualInput.value) || 0) : 0;
+                if (manualDiscount > manualMax) manualDiscount = manualMax;
+                const savings = standardDiscount + manualDiscount;
+                const total = Math.max(0, subtotal - savings);
+
+                if (itemCountEl) itemCountEl.textContent = items;
+                if (subtotalEl) subtotalEl.textContent = money(subtotal);
+                if (rate > 0 && discountRow) {
+                    discountRow.classList.remove('hidden');
+                    discountRateEl.textContent = `(${rate}%)`;
+                    discountEl.textContent = `-${money(standardDiscount)}`;
+                } else if (discountRow) {
+                    discountRow.classList.add('hidden');
+                }
+                if (savings > 0 && savingsRow) {
+                    savingsRow.classList.remove('hidden');
+                    savingsEl.textContent = money(savings);
+                } else if (savingsRow) {
+                    savingsRow.classList.add('hidden');
+                }
+                if (totalEl) totalEl.textContent = money(total);
+
+                updateHint(rate);
+            }
+
+            document.querySelector('form').addEventListener('input', (e) => {
+                if (e.target.matches('[data-line-qty], [data-line-cost], #id_manual_discount')) updateSummary();
+            });
+            document.querySelector('form').addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-action="clear-line"]');
+                if (!btn) return;
+                const row = btn.closest('[data-line-row]');
+                const qtyInput = row ? row.querySelector('[data-line-qty]') : null;
+                if (qtyInput) {
+                    qtyInput.value = 0;
+                    updateSummary();
+                }
+            });
+            if (select) select.addEventListener('change', updateSummary);
+
+            updateSummary();
+        })();
+        </script>
+    </form>
+</div>
+</div>
+{% endblock %}

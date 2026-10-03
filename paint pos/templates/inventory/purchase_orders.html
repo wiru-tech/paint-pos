@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Purchase Orders - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1200px] mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-md mb-md">
+        <div>
+            <a href="{% url 'inventory:list' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+                <span class="material-symbols-outlined text-[16px]">arrow_back</span> Inventory
+            </a>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Purchase Orders</h1>
+            <p class="font-body-md text-on-surface-variant mt-1">Order from suppliers and book the stock in when it arrives.</p>
+        </div>
+        <div class="flex gap-sm">
+            <a href="{% url 'inventory:suppliers' %}" class="h-11 px-lg border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">storefront</span> Suppliers
+            </a>
+            <a href="{% url 'inventory:purchase_order_create' %}" class="h-11 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">add</span> New Order
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Total Orders</span>
+                <span class="material-symbols-outlined text-primary text-[15px]">receipt_long</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ stats.total }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">across every supplier</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Open</span>
+                <span class="material-symbols-outlined text-amber-500 text-[15px]">pending_actions</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ stats.open }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">draft or awaiting delivery</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Received</span>
+                <span class="material-symbols-outlined text-emerald-500 text-[15px]">inventory</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">{{ stats.received }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">booked into stock</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+            <div class="flex items-center justify-between mb-xs">
+                <span class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Committed Cost</span>
+                <span class="material-symbols-outlined text-error text-[15px]">account_balance_wallet</span>
+            </div>
+            <p class="font-mono-data text-[18px] font-bold text-on-surface">${{ stats.committed_cost|floatformat:2|intcomma }}</p>
+            <p class="font-body-md text-[11px] text-secondary mt-0.5">ordered + received</p>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-sm mb-md">
+        <div class="flex flex-wrap gap-2">
+            <a href="?{% if q %}q={{ q }}&{% endif %}" class="h-8 px-4 rounded-full font-label-md text-[13px] font-medium flex items-center border transition-colors {% if not status %}bg-primary text-on-primary border-primary{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low{% endif %}">All</a>
+            {% for value, label in statuses %}
+            <a href="?status={{ value }}{% if q %}&q={{ q }}{% endif %}" class="h-8 px-4 rounded-full font-label-md text-[13px] font-medium flex items-center border transition-colors {% if status == value %}bg-primary text-on-primary border-primary{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low{% endif %}">{{ label }}</a>
+            {% endfor %}
+        </div>
+        <form method="get" class="flex items-center gap-xs">
+            {% if status %}<input type="hidden" name="status" value="{{ status }}"/>{% endif %}
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
+                <input type="text" name="q" value="{{ q }}" placeholder="Search reference or supplier..." onchange="this.form.submit()"
+                       class="h-8 pl-8 pr-sm py-0 rounded-lg border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px] w-56"/>
+            </div>
+            {% if has_filters %}
+            <a href="{% url 'inventory:purchase_orders' %}" class="h-8 flex items-center text-on-surface-variant font-label-md text-[12px] font-medium hover:text-primary transition-colors">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+                    <th class="px-5 py-4 font-semibold">Reference</th>
+                    <th class="px-5 py-4 font-semibold">Supplier</th>
+                    <th class="px-5 py-4 font-semibold">Branch</th>
+                    <th class="px-5 py-4 font-semibold">Date</th>
+                    <th class="px-5 py-4 font-semibold">Status</th>
+                    <th class="px-5 py-4 font-semibold text-right">Units</th>
+                    <th class="px-5 py-4 font-semibold text-right">Cost</th>
+                    <th class="px-5 py-4 font-semibold text-right">Discount</th>
+                    <th class="px-5 py-4 font-semibold text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="font-body-md text-[14px] text-on-surface">
+                {% for order in orders %}
+                <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors">
+                    <td class="px-5 py-3">
+                        <a href="{% url 'inventory:purchase_order_detail' order.pk %}" class="font-mono-data text-[13px] text-primary hover:underline">{{ order.reference }}</a>
+                    </td>
+                    <td class="px-5 py-3">{{ order.supplier.name }}</td>
+                    <td class="px-5 py-3 text-secondary">{{ order.branch.name }}</td>
+                    <td class="px-5 py-3 text-secondary font-mono-data text-[12px]">{{ order.created_at|date:"M j, Y" }}</td>
+                    <td class="px-5 py-3">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-label-md text-[11px] border
+                            {% if order.status == 'received' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                            {% elif order.status == 'cancelled' %}bg-red-50 text-red-700 border-red-100
+                            {% elif order.status == 'ordered' %}bg-amber-50 text-amber-700 border-amber-100
+                            {% else %}bg-surface-container text-on-surface-variant border-outline-variant{% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full
+                                {% if order.status == 'received' %}bg-emerald-600
+                                {% elif order.status == 'cancelled' %}bg-red-600
+                                {% elif order.status == 'ordered' %}bg-amber-600
+                                {% else %}bg-secondary{% endif %}"></span>
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-right font-mono-data {% if order.units_received < order.units_ordered and order.status != 'cancelled' %}text-amber-700{% endif %}">{{ order.units_received }} / {{ order.units_ordered }}</td>
+                    <td class="px-5 py-3 text-right">
+                        <div class="font-mono-data font-semibold">${{ order.grand_total|floatformat:2|intcomma }}</div>
+                        {% if order.total_discount %}
+                        <div class="font-mono-data text-[11px] text-secondary line-through decoration-outline-variant">${{ order.subtotal|floatformat:2|intcomma }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right">
+                        {% if order.total_discount %}
+                        <div class="font-mono-data text-[13px] font-semibold text-emerald-700">
+                            -${{ order.total_discount|floatformat:2|intcomma }}{% if order.total_discount_percent %} <span class="font-normal text-[11px]">({{ order.total_discount_percent|floatformat:1 }}%)</span>{% endif %}
+                        </div>
+                        {% if order.manual_discount %}
+                        <div class="font-mono-data text-[11px] text-secondary" title="Entered by hand from the vendor's invoice">incl. ${{ order.manual_discount|floatformat:2|intcomma }} manual</div>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-secondary font-mono-data text-[12px]">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right whitespace-nowrap">
+                        <a href="{% url 'inventory:purchase_order_detail' order.pk %}" class="text-primary font-label-md text-[13px] font-medium hover:underline">
+                            {% if order.is_open %}Receive{% else %}View{% endif %}
+                        </a>
+                        <a href="{% url 'inventory:purchase_order_receipt' order.pk %}" title="View receipt" class="text-on-surface-variant hover:text-primary font-label-md text-[13px] font-medium hover:underline ml-sm">
+                            Receipt
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="px-5 py-12 text-center">
+                    <span class="material-symbols-outlined text-[28px] text-outline block mb-xs">receipt_long</span>
+                    <span class="text-secondary font-body-md">
+                        {% if has_filters %}No purchase orders match these filters.{% else %}No purchase orders yet — start one above.{% endif %}
+                    </span>
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if page.paginator.num_pages > 1 %}
+        <div class="px-5 py-3 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between">
+            <span class="font-body-md text-[12px] text-on-surface-variant">
+                Showing {{ page.start_index }} to {{ page.end_index }} of {{ page.paginator.count }} orders
+            </span>
+            <div class="flex gap-1">
+                {% if page.has_previous %}
+                <a href="?{{ qs_without_page }}&page={{ page.previous_page_number }}"
+                   class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                </a>
+                {% else %}
+                <span class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant opacity-50 flex items-center">
+                    <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                </span>
+                {% endif %}
+                {% for num in page.paginator.page_range %}
+                <a href="?{{ qs_without_page }}&page={{ num }}"
+                   class="h-7 px-2.5 border rounded-md font-mono-data text-[12px] font-medium transition-colors
+                   {% if num == page.number %}border-primary bg-primary text-on-primary{% else %}border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low{% endif %}">{{ num }}</a>
+                {% endfor %}
+                {% if page.has_next %}
+                <a href="?{{ qs_without_page }}&page={{ page.next_page_number }}"
+                   class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                </a>
+                {% else %}
+                <span class="h-7 px-1.5 border border-outline-variant rounded-md text-on-surface-variant opacity-50 flex items-center">
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}

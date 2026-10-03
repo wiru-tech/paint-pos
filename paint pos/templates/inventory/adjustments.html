@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Stock Adjustments - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1100px] mx-auto w-full">
+    <a href="{% url 'inventory:list' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Inventory
+    </a>
+    <div class="flex items-center justify-between gap-md mb-lg">
+        <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Stock Adjustment History</h1>
+        <a href="{% url 'inventory:list' %}" class="h-9 px-md bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs shrink-0" title="Pick a product on the Inventory screen, then use its adjust icon">
+            <span class="material-symbols-outlined text-[16px]">edit_note</span> Log an Adjustment
+        </a>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+                    <th class="px-5 py-4 font-semibold">When</th>
+                    <th class="px-5 py-4 font-semibold">Product</th>
+                    <th class="px-5 py-4 font-semibold">Branch</th>
+                    <th class="px-5 py-4 font-semibold">Reason</th>
+                    <th class="px-5 py-4 font-semibold text-right">Change</th>
+                    <th class="px-5 py-4 font-semibold">By</th>
+                </tr>
+            </thead>
+            <tbody class="font-body-md text-[14px] text-on-surface">
+                {% for adj in adjustments %}
+                <tr class="border-b border-outline-variant/60 last:border-b-0">
+                    <td class="px-5 py-3 font-mono-data text-[12px] text-secondary">{{ adj.created_at|date:"M d, Y H:i" }}</td>
+                    <td class="px-5 py-3">
+                        <div>{{ adj.product.name }}</div>
+                        <div class="font-mono-data text-[12px] text-secondary">{{ adj.product.sku }}</div>
+                    </td>
+                    <td class="px-5 py-3 text-secondary">{{ adj.branch.name }}</td>
+                    <td class="px-5 py-3 text-secondary">{{ adj.get_reason_display }}{% if adj.note %} — {{ adj.note }}{% endif %}</td>
+                    <td class="px-5 py-3 text-right font-mono-data font-semibold {% if adj.delta < 0 %}text-error{% else %}text-tertiary{% endif %}">
+                        {{ adj.previous_quantity }} → {{ adj.new_quantity }}
+                    </td>
+                    <td class="px-5 py-3 text-secondary font-mono-data text-[12px]">{{ adj.created_by.username|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-5 py-10 text-center text-secondary font-body-md">No adjustments recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,242 @@
+{% load static %}<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{% block title %}ChromaPOS{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "surface": "#f8f9fa",
+                    "surface-dim": "#d9dadb",
+                    "surface-bright": "#f8f9fa",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f3f4f5",
+                    "surface-container": "#edeeef",
+                    "surface-container-high": "#e7e8e9",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-surface": "#191c1d",
+                    "on-surface-variant": "#434655",
+                    "inverse-surface": "#2e3132",
+                    "inverse-on-surface": "#f0f1f2",
+                    "outline": "#737686",
+                    "outline-variant": "#c3c6d7",
+                    "surface-tint": "#0053db",
+                    "primary": "#004ac6",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#2563eb",
+                    "on-primary-container": "#eeefff",
+                    "inverse-primary": "#b4c5ff",
+                    "secondary": "#545f73",
+                    "on-secondary": "#ffffff",
+                    "secondary-container": "#d5e0f8",
+                    "on-secondary-container": "#586377",
+                    "tertiary": "#006242",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#007d55",
+                    "on-tertiary-container": "#bdffdb",
+                    "error": "#ba1a1a",
+                    "on-error": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#dbe1ff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed": "#00174b",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "secondary-fixed": "#d8e3fb",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "on-secondary-fixed": "#111c2d",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "tertiary-fixed": "#6ffbbe",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-tertiary-fixed": "#002113",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "background": "#f8f9fa",
+                    "on-background": "#191c1d",
+                    "surface-variant": "#e1e3e4"
+                },
+                borderRadius: { sm: "0.25rem", DEFAULT: "0.4rem", md: "0.6rem", lg: "0.75rem", xl: "1.1rem", full: "9999px" },
+                spacing: { base: "6px", xs: "3px", sm: "6px", md: "12px", lg: "16px", xl: "22px", "container-margin": "16px", gutter: "12px" },
+                fontFamily: {
+                    "mono-data": ["Inter"], "display-lg": ["Inter"], "body-md": ["Inter"],
+                    "body-lg": ["Inter"], "headline-md": ["Inter"], "label-md": ["Inter"], "headline-sm": ["Inter"]
+                },
+                fontSize: {
+                    "mono-data": ["13px", { lineHeight: "18px", fontWeight: "500" }],
+                    "display-lg": ["24px", { lineHeight: "30px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                    "body-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+                    "body-lg": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                    "headline-md": ["19px", { lineHeight: "25px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                    "label-md": ["11px", { lineHeight: "14px", letterSpacing: "0.05em", fontWeight: "600" }],
+                    "headline-sm": ["16px", { lineHeight: "22px", fontWeight: "600" }]
+                },
+                boxShadow: {
+                    premium: "0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)",
+                    "premium-hover": "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03)"
+                }
+            }
+        }
+    };
+</script>
+<link rel="stylesheet" href="{% static 'chromapos/css/app.css' %}"/>
+{% block extra_head %}{% endblock %}
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-screen overflow-hidden flex selection:bg-primary-container selection:text-on-primary-container">
+{% if user.is_authenticated %}
+<nav id="mobile-nav" class="h-screen fixed md:static inset-y-0 left-0 w-64 md:w-52 flex flex-col py-sm px-base gap-xs border-r border-outline-variant bg-surface-container z-[60] shrink-0 -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
+    <div class="flex items-center gap-sm p-xs mb-md">
+        <div class="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-outline-variant bg-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-on-primary text-[18px]">palette</span>
+        </div>
+        <div class="flex flex-col min-w-0 flex-1">
+            <span class="font-headline-sm text-headline-sm font-extrabold text-on-surface truncate">{% if user.profile.branch %}{{ user.profile.branch.name }}{% else %}ChromaPOS{% endif %}</span>
+            <span class="font-label-md text-label-md text-secondary truncate">{{ user.get_full_name|default:user.username }}</span>
+        </div>
+        <button type="button" id="mobile-nav-close" class="md:hidden w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant shrink-0" aria-label="Close menu">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+    <div class="px-xs mb-sm">
+        <a href="{% url 'sales:desk' %}?tint=1" class="w-full h-9 bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-primary-container transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[16px]">add</span>Quick Mix
+        </a>
+    </div>
+    <div class="flex flex-col gap-xs flex-1 overflow-y-auto">
+        <a href="{% url 'core:home' %}" class="nav-link {% if active_nav == 'home' %}active{% endif %}">
+            <span class="material-symbols-outlined" {% if active_nav == 'home' %}data-weight="fill"{% endif %}>space_dashboard</span>
+            <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a href="{% url 'sales:desk' %}" class="nav-link {% if active_nav == 'sales' %}active{% endif %}">
+            <span class="material-symbols-outlined" data-weight="fill">point_of_sale</span>
+            <span class="font-label-md text-label-md">Sales</span>
+        </a>
+        <a href="{% url 'sales:history' %}" class="nav-link md:hidden">
+            <span class="material-symbols-outlined">receipt_long</span>
+            <span class="font-label-md text-label-md">Sales History</span>
+        </a>
+        <a href="{% url 'sales:desk' %}?tint=1" class="nav-link {% if active_nav == 'tinting' %}active{% endif %}">
+            <span class="material-symbols-outlined">palette</span>
+            <span class="font-label-md text-label-md">Tinting Desk</span>
+        </a>
+        <a href="{% url 'catalog:color_menu' %}" class="nav-link {% if active_nav == 'color_menu' %}active{% endif %} pl-lg">
+            <span class="material-symbols-outlined text-[18px]">colorize</span>
+            <span class="font-label-md text-label-md">Color Menu</span>
+        </a>
+        <a href="{% url 'inventory:list' %}" class="nav-link {% if active_nav == 'inventory' %}active{% endif %}">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span class="font-label-md text-label-md">Inventory</span>
+        </a>
+        {% if is_manager %}
+        <a href="{% url 'inventory:warehouses' %}" class="nav-link {% if active_nav == 'warehouses' %}active{% endif %} pl-lg">
+            <span class="material-symbols-outlined text-[18px]">warehouse</span>
+            <span class="font-label-md text-label-md">Warehouses</span>
+        </a>
+        <a href="{% url 'inventory:suppliers' %}" class="nav-link {% if active_nav == 'suppliers' %}active{% endif %}">
+            <span class="material-symbols-outlined">local_shipping</span>
+            <span class="font-label-md text-label-md">Suppliers</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'customers:list' %}" class="nav-link {% if active_nav == 'customers' %}active{% endif %}">
+            <span class="material-symbols-outlined">history</span>
+            <span class="font-label-md text-label-md">Customer History</span>
+        </a>
+        {% if is_manager %}
+        <a href="{% url 'catalog:product_list' %}" class="nav-link {% if active_nav == 'catalog' %}active{% endif %}">
+            <span class="material-symbols-outlined">category</span>
+            <span class="font-label-md text-label-md">Catalog</span>
+        </a>
+        <a href="{% url 'core:reports' %}" class="nav-link {% if active_nav == 'reports' %}active{% endif %}">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="font-label-md text-label-md">Reports</span>
+        </a>
+        {% endif %}
+    </div>
+    <div class="flex flex-col gap-xs mt-auto pt-md border-t border-outline-variant">
+        <a href="{% url 'accounts:settings' %}" class="nav-link {% if active_nav == 'settings' %}active{% endif %}"><span class="material-symbols-outlined">settings</span><span class="font-label-md text-label-md">Settings</span></a>
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="nav-link w-full text-left"><span class="material-symbols-outlined">logout</span><span class="font-label-md text-label-md">Sign Out</span></button>
+        </form>
+    </div>
+</nav>
+<div id="mobile-nav-backdrop" class="hidden md:hidden fixed inset-0 bg-black/50 z-50" aria-hidden="true"></div>
+{% endif %}
+<div class="flex-1 flex flex-col h-full overflow-hidden">
+    {% if user.is_authenticated %}
+    <header class="flex justify-between items-center h-12 px-sm md:px-md w-full z-40 bg-surface border-b border-outline-variant shadow-sm shrink-0">
+        <div class="flex items-center gap-xs md:gap-md min-w-0">
+            <button type="button" id="mobile-nav-toggle" class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant shrink-0" aria-label="Open menu" aria-controls="mobile-nav" aria-expanded="false">
+                <span class="material-symbols-outlined text-[22px]">menu</span>
+            </button>
+            <div class="font-display-lg text-display-lg font-bold text-primary md:hidden truncate">ChromaPOS</div>
+            <div class="hidden md:flex items-center gap-xs bg-surface-container-high px-sm py-[3px] rounded-full border border-outline-variant">
+                <div class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim"></div>
+                <span class="font-label-md text-label-md text-on-surface">{% if user.profile.branch %}{{ user.profile.branch.name }}{% else %}No Branch{% endif %} Online</span>
+            </div>
+        </div>
+        <div id="global-search-wrapper" class="js-global-search hidden md:flex flex-1 max-w-xs mx-md relative" data-search-url="{% url 'core:search' %}">
+            <div class="relative w-full">
+                <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
+                <input data-role="search-input" autocomplete="off" class="w-full h-8 pl-8 pr-sm rounded-lg bg-surface-container-lowest border border-outline-variant pos-input font-body-md text-body-md focus:ring-0" placeholder="Search products, customers..." type="text"/>
+            </div>
+            <div data-role="search-results" class="hidden absolute top-full left-0 right-0 mt-xs bg-surface-container-lowest rounded-lg shadow-md overflow-hidden z-50 max-h-96 overflow-y-auto"></div>
+        </div>
+        <div class="flex items-center gap-xs shrink-0">
+            <button type="button" id="mobile-search-toggle" class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant" aria-label="Search" aria-controls="mobile-search-row" aria-expanded="false">
+                <span class="material-symbols-outlined text-[18px]">search</span>
+            </button>
+            <a href="{% url 'core:notifications' %}" title="Notifications"
+               class="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-colors {% if active_nav == 'notifications' %}text-primary bg-surface-container-high{% else %}text-on-surface-variant{% endif %}">
+                <span class="material-symbols-outlined text-[18px]">notifications</span>
+                {% if unread_notifications %}
+                <span class="absolute top-0.5 right-0.5 min-w-[14px] h-3.5 px-1 rounded-full bg-error text-on-error font-label-md text-[9px] flex items-center justify-center">{{ unread_notifications }}</span>
+                {% endif %}
+            </a>
+            <div class="hidden sm:block w-px h-5 bg-outline-variant mx-xs"></div>
+            <a href="{% url 'sales:history' %}" class="hidden sm:flex h-8 px-sm border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors items-center">Sales History</a>
+            <a href="{% url 'sales:desk' %}" class="h-8 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md shadow-sm hover:bg-primary-container transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[16px] sm:hidden">point_of_sale</span>
+                <span class="hidden sm:inline">New Sale</span>
+            </a>
+            <div class="w-px h-5 bg-outline-variant mx-xs"></div>
+            <a href="{% url 'accounts:settings' %}" title="{{ user.username }} — {{ user.profile.get_role_display }}"
+               class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant flex items-center justify-center bg-secondary-container text-on-secondary-container font-bold text-[13px] ml-xs shrink-0">
+                {{ user.username|slice:":1"|upper }}
+            </a>
+        </div>
+    </header>
+    <div id="mobile-search-row" class="hidden md:hidden px-sm py-xs border-b border-outline-variant bg-surface shrink-0">
+        <div class="js-global-search relative flex items-center w-full" data-search-url="{% url 'core:search' %}">
+            <div class="relative w-full">
+                <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
+                <input data-role="search-input" autocomplete="off" class="w-full h-8 pl-8 pr-sm rounded-lg bg-surface-container-lowest border border-outline-variant pos-input font-body-md text-body-md focus:ring-0" placeholder="Search products, customers..." type="text"/>
+            </div>
+            <div data-role="search-results" class="hidden absolute top-full left-0 right-0 mt-xs bg-surface-container-lowest rounded-lg shadow-md overflow-hidden z-50 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <div class="px-lg pt-md shrink-0">
+        {% for message in messages %}
+        <div class="mb-xs px-md py-sm rounded-xl border text-body-md font-body-md {% if message.tags == 'error' %}bg-error-container text-on-error-container border-error{% else %}bg-tertiary-fixed text-on-tertiary-fixed-variant border-tertiary{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="flex-1 flex overflow-hidden bg-background">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<script src="{% static 'chromapos/js/app.js' %}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

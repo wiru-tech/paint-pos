@@ -1,0 +1,60 @@
+/* ChromaPOS shared styles — extracted from the Stitch design system
+   (chromatic_enterprise/DESIGN.md) so every page shares one look. */
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined[data-weight="fill"] {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom scrollbar for the POS environment */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e1e3e4; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #c3c6d7; }
+
+/* Input styling per DESIGN.md: 1px border, 2px Electric Blue on focus */
+.pos-input {
+    border: 1px solid #e2e8f0;
+}
+.pos-input:focus {
+    border: 2px solid #004ac6;
+    outline: none;
+}
+
+.micro-shadow { box-shadow: 0px 2px 4px -1px rgba(15, 23, 42, 0.03); }
+.overlay-shadow { box-shadow: 0px 10px 15px -3px rgba(15, 23, 42, 0.1); }
+
+.hover-lift { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.hover-lift:hover { transform: translateY(-1px); }
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+    padding: 7px 8px;
+    border-radius: 0.6rem;
+    font-weight: 500;
+    color: #434655;
+    transition: background-color .15s ease, color .15s ease;
+}
+.nav-link:hover { background-color: #e1e3e4; }
+.nav-link.active {
+    background-color: #d5e0f8;
+    color: #191c1d;
+    font-weight: 700;
+}

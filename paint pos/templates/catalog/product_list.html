@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Catalog - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1200px] mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-sm mb-md">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Catalog</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5">Products, pricing and tintable bases — no admin login needed.</p>
+        </div>
+        <div class="flex gap-xs">
+            <a href="{% url 'catalog:reference_data' %}" class="h-8 px-sm border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[15px]">palette</span> Brands &amp; Pigments
+            </a>
+            <a href="{% url 'catalog:product_create' %}" class="h-8 px-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[15px]">add</span> New Product
+            </a>
+        </div>
+    </div>
+
+    <form method="get" class="mb-md flex flex-wrap items-center gap-xs">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search SKU or name..." class="h-7 px-sm py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px] w-48"/>
+        <select name="category" class="h-7 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+            <option value="">All Categories</option>
+            {% for c in categories %}<option value="{{ c.id }}" {% if category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+        <select name="show" class="h-7 pl-sm pr-7 py-0 rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-[12px]">
+            <option value="active" {% if show == "active" %}selected{% endif %}>Active only</option>
+            <option value="inactive" {% if show == "inactive" %}selected{% endif %}>Retired only</option>
+            <option value="all" {% if show == "all" %}selected{% endif %}>All products</option>
+        </select>
+        <button type="submit" class="h-7 px-sm bg-primary text-on-primary rounded-lg font-label-md text-[12px] hover:bg-primary-container transition-colors">Filter</button>
+    </form>
+
+    <div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-outline-variant font-label-md text-[10px] text-secondary uppercase tracking-wider">
+                    <th class="px-3 py-2 font-semibold">SKU</th>
+                    <th class="px-3 py-2 font-semibold">Product</th>
+                    <th class="px-3 py-2 font-semibold">Category / Brand</th>
+                    <th class="px-3 py-2 font-semibold text-right">Price</th>
+                    <th class="px-3 py-2 font-semibold text-right">Margin</th>
+                    <th class="px-3 py-2 font-semibold text-center">Tintable</th>
+                    <th class="px-3 py-2 font-semibold text-center">Reorder At</th>
+                    <th class="px-3 py-2 font-semibold text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="font-body-md text-[13px] text-on-surface">
+                {% for product in page.object_list %}
+                <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors {% if not product.is_active %}opacity-60{% endif %}">
+                    <td class="px-3 py-1.5 font-mono-data text-[12px] text-secondary">{{ product.sku }}</td>
+                    <td class="px-3 py-1.5">
+                        <div class="font-medium">{{ product.name }}</div>
+                        <div class="text-[11px] text-secondary">{{ product.unit_label }}{% if not product.is_active %} · retired{% endif %}</div>
+                    </td>
+                    <td class="px-3 py-1.5 text-secondary text-[12px]">{{ product.category.name }}{% if product.brand %} · {{ product.brand.name }}{% endif %}</td>
+                    <td class="px-3 py-1.5 text-right font-mono-data font-semibold">${{ product.unit_price|floatformat:2|intcomma }}</td>
+                    <td class="px-3 py-1.5 text-right font-mono-data">
+                        {% if product.sells_below_cost %}
+                        <span class="text-error font-semibold flex items-center justify-end gap-1" title="Selling below cost — every sale at list price loses money">
+                            <span class="material-symbols-outlined text-[14px]">warning</span> {{ product.margin_percent|floatformat:0 }}%
+                        </span>
+                        {% elif product.cost_price %}
+                        <span class="text-secondary">{{ product.margin_percent|floatformat:0 }}%</span>
+                        {% else %}
+                        <span class="text-outline-variant" title="No cost on file">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-1.5 text-center">
+                        {% if product.is_tintable %}
+                        <span class="material-symbols-outlined text-[16px] text-primary" title="Available at the tinting desk">palette</span>
+                        {% else %}<span class="text-outline-variant">—</span>{% endif %}
+                    </td>
+                    <td class="px-3 py-1.5 text-center font-mono-data text-secondary">{{ product.reorder_threshold }}</td>
+                    <td class="px-3 py-1.5 text-right whitespace-nowrap">
+                        <div class="inline-flex items-center gap-1">
+                            <a href="{% url 'catalog:product_edit' product.pk %}" title="Edit product"
+                               class="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[16px]">edit</span>
+                            </a>
+                            <form method="post" action="{% url 'catalog:product_toggle' product.pk %}" class="inline-flex">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
+                                {% if product.is_active %}
+                                <button type="submit" title="Retire product"
+                                        class="w-7 h-7 rounded-md text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors inline-flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">archive</span>
+                                </button>
+                                {% else %}
+                                <button type="submit" title="Restore product"
+                                        class="w-7 h-7 rounded-md text-on-surface-variant hover:text-emerald-600 hover:bg-emerald-50 transition-colors inline-flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">restore</span>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="px-3 py-8 text-center text-secondary font-body-md">No products match these filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <div class="px-3 py-2 border-t border-outline-variant flex items-center justify-between">
+            <span class="font-body-md text-[12px] text-on-surface-variant">Showing {{ page.start_index }}–{{ page.end_index }} of {{ page.paginator.count }}</span>
+            <div class="flex gap-1">
+                {% if page.has_previous %}<a href="?{{ qs_without_page }}&page={{ page.previous_page_number }}" class="h-7 px-2.5 border border-outline-variant rounded-md font-mono-data text-[12px] hover:bg-surface-container-low transition-colors flex items-center">Prev</a>{% endif %}
+                {% if page.has_next %}<a href="?{{ qs_without_page }}&page={{ page.next_page_number }}" class="h-7 px-2.5 border border-outline-variant rounded-md font-mono-data text-[12px] hover:bg-surface-container-low transition-colors flex items-center">Next</a>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

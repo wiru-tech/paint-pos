@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Staff - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-5xl mx-auto w-full">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-md mb-lg">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Staff Accounts</h1>
+            <p class="font-body-md text-on-surface-variant mt-1">Cashiers ring up sales; managers approve transfers, void sales and edit the catalog.</p>
+        </div>
+        <a href="{% url 'accounts:staff_create' %}" class="h-11 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-xs w-fit">
+            <span class="material-symbols-outlined text-[18px]">person_add</span> New Account
+        </a>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-outline-variant font-label-md text-[11px] text-secondary uppercase tracking-wider">
+                    <th class="px-5 py-4 font-semibold">User</th>
+                    <th class="px-5 py-4 font-semibold">Role</th>
+                    <th class="px-5 py-4 font-semibold">Branch</th>
+                    <th class="px-5 py-4 font-semibold">Status</th>
+                    <th class="px-5 py-4 font-semibold text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="font-body-md text-[14px] text-on-surface">
+                {% for member in staff %}
+                <tr class="border-b border-outline-variant/60 last:border-b-0 hover:bg-surface-container-low transition-colors">
+                    <td class="px-5 py-3">
+                        <div class="font-medium">{{ member.get_full_name|default:member.username }}</div>
+                        <div class="font-mono-data text-[12px] text-secondary">{{ member.username }}{% if member.email %} · {{ member.email }}{% endif %}</div>
+                    </td>
+                    <td class="px-5 py-3">
+                        <span class="inline-flex px-2.5 py-1 rounded-md font-label-md text-[11px] border {% if member.profile.is_manager %}bg-primary-fixed text-primary border-primary-fixed-dim{% else %}bg-surface-container text-on-surface-variant border-outline-variant{% endif %}">
+                            {{ member.profile.get_role_display|default:"Cashier" }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-secondary">{{ member.profile.branch.name|default:"—" }}</td>
+                    <td class="px-5 py-3">
+                        {% if member.is_active %}
+                        <span class="text-emerald-700 font-label-md text-[12px]">Active</span>
+                        {% else %}
+                        <span class="text-secondary font-label-md text-[12px]">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right">
+                        <a href="{% url 'accounts:staff_edit' member.pk %}" class="text-primary font-label-md text-[13px] font-medium hover:underline">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-5 py-10 text-center text-secondary font-body-md">No staff accounts yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+{% endblock %}

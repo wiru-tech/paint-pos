@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}{{ customer.name }} - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-7xl mx-auto w-full flex flex-col gap-md">
+
+    <a href="{% url 'customers:list' %}" class="text-secondary hover:text-primary font-body-md text-[12px] flex items-center gap-xs w-fit">
+        <span class="material-symbols-outlined text-[14px]">arrow_back</span> All Customers
+    </a>
+
+    <section class="bg-surface-container-lowest rounded-lg p-sm flex flex-col md:flex-row gap-md items-center md:items-start shadow-sm">
+        <div class="flex gap-sm items-center w-full md:w-auto md:border-r border-outline-variant pb-sm md:pb-0 md:pr-md">
+            <div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-headline-md text-[17px] font-bold border-2 border-primary-fixed shrink-0">{{ customer.initials }}</div>
+            <div>
+                <h1 class="font-headline-md text-headline-md text-on-surface flex items-center gap-xs">
+                    {{ customer.name }}
+                    {% if customer.is_pro %}<span class="bg-primary-fixed text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-wide uppercase">Pro</span>{% endif %}
+                </h1>
+                <p class="font-body-md text-[12px] text-secondary mt-0.5 flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-secondary text-[13px]">phone</span> {{ customer.phone|default:"No phone on file" }}
+                </p>
+                <a href="{% url 'customers:edit' customer.pk %}" class="font-label-md text-[11px] text-primary hover:underline mt-0.5 inline-block">Edit details</a>
+            </div>
+        </div>
+        <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-sm w-full">
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Total Spend</p>
+                <p class="font-mono-data text-on-surface text-[15px] font-semibold">${{ total_spend|floatformat:2|intcomma }}</p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Last Visit</p>
+                <p class="font-body-md text-on-surface font-medium text-[12px]">{% if last_sale %}{{ last_sale.created_at|date:"M d, Y" }}{% else %}—{% endif %}</p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Fav Brand</p>
+                <p class="font-body-md text-on-surface font-medium text-[12px]">{{ customer.favorite_brand.name|default:"—" }}</p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Store Credit</p>
+                <p class="font-mono-data text-tertiary font-semibold text-[15px]">${{ customer.store_credit|floatformat:2|intcomma }}</p>
+            </div>
+            <div>
+                <p class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-0.5">Loyalty Points</p>
+                <p class="font-mono-data text-on-surface font-semibold text-[15px]">{{ customer.loyalty_points }}</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-md">
+        <div class="xl:col-span-2 flex flex-col gap-md">
+            <section>
+                <div class="flex justify-between items-end mb-xs">
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Saved Color Formulas</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    {% for sf in saved_formulas %}
+                    <div class="bg-surface-container-lowest rounded-lg p-xs flex gap-xs shadow-sm hover-lift">
+                        <div class="w-14 h-14 rounded-md shrink-0 border border-black/10 relative overflow-hidden shadow-inner" style="background-color: {{ sf.color_formula.hex_color }};">
+                            {% if sf.finish %}<div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white font-label-md text-[8px] py-0.5 text-center backdrop-blur-md font-medium tracking-widest uppercase">{{ sf.finish }}</div>{% endif %}
+                        </div>
+                        <div class="flex-1 flex flex-col justify-between min-w-0">
+                            <div>
+                                <h3 class="font-body-md text-[13px] text-on-surface truncate">{{ sf.color_formula.name }}</h3>
+                                <p class="font-mono-data text-[11px] text-secondary mt-0.5">Ref: {{ sf.reference_code }}</p>
+                            </div>
+                            <a href="{% url 'sales:desk' %}?product_id={{ sf.color_formula.base_product_id }}&hex={{ sf.color_formula.hex_color|cut:'#' }}&base_size={{ sf.color_formula.base_size }}&name={{ sf.color_formula.name|urlencode }}&finish={{ sf.finish|urlencode }}&tint=1"
+                               class="mt-1.5 bg-primary text-on-primary font-body-md text-[11px] font-medium py-1 rounded-md hover:bg-primary-container transition-colors flex items-center justify-center gap-xs">
+                                <span class="material-symbols-outlined text-[13px]">science</span> Re-tint at Desk
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-secondary font-body-md text-body-md col-span-2">No saved formulas yet for this customer.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col">
+                <div class="p-sm border-b border-outline-variant">
+                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Recent Purchases</h2>
+                </div>
+                <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surface-container-low border-b border-outline-variant font-label-md text-[10px] text-secondary uppercase tracking-wider">
+                            <th class="py-2 px-sm font-semibold">Date / Inv</th>
+                            <th class="py-2 px-xs font-semibold">Product / Color</th>
+                            <th class="py-2 px-xs font-semibold">Qty</th>
+                            <th class="py-2 px-sm text-right font-semibold">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-body-md text-[13px] text-on-surface">
+                        {% for row in recent_items %}
+                        <tr class="border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors">
+                            <td class="py-2 px-sm align-top">
+                                <div class="font-medium text-on-surface">{{ row.sale.created_at|date:"M d, Y" }}</div>
+                                <div class="font-mono-data text-[11px] text-secondary mt-0.5">#{{ row.sale.invoice_number }}</div>
+                            </td>
+                            <td class="py-2 px-xs align-top">
+                                <div class="font-medium text-on-surface mb-1">{{ row.item.description }}</div>
+                                {% if row.item.color_formula %}
+                                <div class="flex items-center gap-1.5 bg-surface p-1 rounded-md inline-flex border border-outline-variant/50">
+                                    <div class="w-3 h-3 rounded-sm border border-black/10 shadow-inner" style="background-color: {{ row.item.color_formula.hex_color }};"></div>
+                                    <span class="text-secondary text-[11px] font-medium">{{ row.item.color_formula.name }}{% if row.item.color_formula.finish %} ({{ row.item.color_formula.finish }}){% endif %}</span>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="py-2 px-xs align-top font-mono-data text-secondary">{{ row.item.quantity|floatformat:0 }}</td>
+                            <td class="py-2 px-sm text-right align-top font-mono-data font-semibold text-on-surface">${{ row.item.line_total|floatformat:2|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="py-6 text-center text-secondary font-body-md">No completed purchases yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </section>
+        </div>
+
+        <div class="flex flex-col gap-md">
+            <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-primary bg-primary-fixed p-1 rounded-md text-[16px]">science</span> Quick Re-tint
+                </h3>
+                {% if saved_formulas %}
+                <div class="space-y-sm">
+                    <div>
+                        <label class="font-label-md text-[11px] font-semibold text-on-surface mb-1 block">Select Saved Formula</label>
+                        <select id="quick-retint-select" class="w-full h-9 border border-outline-variant rounded-lg pl-sm pr-6 py-0 font-body-md text-[12px] bg-surface">
+                            {% for sf in saved_formulas %}
+                            <option value="{{ sf.id }}">{{ sf.color_formula.name }} ({{ sf.reference_code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% for sf in saved_formulas %}
+                    <div class="quick-retint-detail" data-formula-id="{{ sf.id }}" {% if not forloop.first %}style="display:none"{% endif %}>
+                        <div class="border border-outline-variant rounded-lg p-sm bg-surface-container-low flex flex-col gap-1.5 mb-sm">
+                            <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider mb-1">Formula ({{ sf.color_formula.base_size }} — {{ sf.color_formula.base_product.name }})</div>
+                            {% for line in sf.color_formula.lines.all %}
+                            <div class="flex justify-between items-center py-1 border-b border-outline-variant border-dashed last:border-b-0">
+                                <span class="font-mono-data text-[12px] text-on-surface font-medium">{{ line.pigment.code }} ({{ line.pigment.name }})</span>
+                                <span class="font-mono-data text-[12px] text-on-surface font-bold bg-surface px-1.5 py-0.5 rounded border border-outline-variant">{{ line.shots }} shots</span>
+                            </div>
+                            {% empty %}
+                            <p class="text-secondary text-[12px]">No pigment lines recorded.</p>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'sales:desk' %}?product_id={{ sf.color_formula.base_product_id }}&hex={{ sf.color_formula.hex_color|cut:'#' }}&base_size={{ sf.color_formula.base_size }}&name={{ sf.color_formula.name|urlencode }}&finish={{ sf.finish|urlencode }}&tint=1"
+                           class="w-full bg-primary text-on-primary font-body-md text-[13px] font-medium py-2 rounded-lg hover:bg-primary-container transition-all flex items-center justify-center gap-xs">
+                            Send to Dispenser <span class="material-symbols-outlined text-[15px]">send</span>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-secondary font-body-md text-body-md">No saved formulas to re-tint yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-tertiary bg-tertiary-fixed p-1 rounded-md text-[16px]">redeem</span> Loyalty
+                </h3>
+                <p class="font-body-md text-[12px] text-secondary mb-sm">
+                    {{ customer.loyalty_points }} point(s) on file. Every {{ redeem_block }} points redeem for ${{ redeem_credit|floatformat:2 }} store credit.
+                </p>
+                {% if can_redeem %}
+                <form method="post" action="{% url 'customers:redeem' customer.pk %}" class="flex gap-xs">
+                    {% csrf_token %}
+                    <input type="number" name="blocks" value="1" min="1" max="{{ customer.loyalty_points|floatformat:0|default:1 }}"
+                           class="w-16 h-8 px-xs rounded-lg border border-outline-variant bg-surface-container-lowest font-mono-data text-[12px]"/>
+                    <button type="submit" class="flex-1 h-8 bg-tertiary text-on-tertiary rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">Redeem for Credit</button>
+                </form>
+                {% else %}
+                <p class="font-body-md text-[12px] text-secondary italic">Not enough points to redeem yet.</p>
+                {% endif %}
+                {% if loyalty_entries %}
+                <div class="mt-sm pt-sm border-t border-outline-variant flex flex-col gap-1">
+                    {% for entry in loyalty_entries %}
+                    <div class="flex justify-between font-body-md text-[11px] text-secondary">
+                        <span>{{ entry.get_kind_display }}</span>
+                        <span class="font-mono-data {% if entry.points > 0 %}text-tertiary{% elif entry.points < 0 %}text-error{% endif %}">{{ entry.points|stringformat:"+d" }} pts</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-lg p-sm shadow-sm flex-1 flex flex-col">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">Customer Notes</h3>
+                <form method="post" action="{% url 'customers:update_notes' customer.pk %}" class="flex-1 flex flex-col gap-xs">
+                    {% csrf_token %}
+                    <textarea name="notes" rows="5" class="bg-surface border border-outline-variant rounded-lg p-sm flex-1 font-body-md text-[13px] leading-relaxed text-on-surface resize-none pos-input">{{ customer.notes }}</textarea>
+                    <button type="submit" class="self-end px-sm h-8 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">Save Notes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'chromapos/js/customers.js' %}"></script>
+{% endblock %}

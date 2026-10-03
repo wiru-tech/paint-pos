@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Receipt {{ sale.invoice_number }} - ChromaPOS{% endblock %}
+{% block extra_head %}
+<style>
+@media print {
+    nav, header, .no-print { display: none !important; }
+    #receipt-card { border: none !important; box-shadow: none !important; }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-xl flex justify-center bg-surface-container-low">
+    <div id="receipt-card" class="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-sm p-lg h-fit">
+        <div class="text-center mb-lg">
+            <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-sm mx-auto mb-sm">
+                <span class="material-symbols-outlined text-on-primary">palette</span>
+            </div>
+            <h1 class="font-headline-md text-headline-md text-on-surface font-bold">ChromaPOS</h1>
+            <p class="font-body-md text-body-md text-secondary">{{ sale.branch.name }}</p>
+        </div>
+
+        <div class="flex justify-between font-mono-data text-mono-data text-secondary mb-md">
+            <span>{{ sale.invoice_number }}</span>
+            <span>{{ sale.completed_at|date:"M d, Y H:i" }}</span>
+        </div>
+        <div class="font-body-md text-body-md text-secondary mb-md">
+            Cashier: {{ sale.cashier.get_full_name|default:sale.cashier.username }}
+        </div>
+        <div class="font-body-md text-body-md text-secondary mb-md">
+            {% if sale.customer and sale.customer.is_regular %}
+                Customer: {{ sale.customer.name }} (Regular)
+                {% if sale.customer.phone %}&middot; {{ sale.customer.phone }}{% endif %}
+                {% if sale.customer.email %}&middot; {{ sale.customer.email }}{% endif %}
+            {% elif sale.customer %}
+                Customer: {{ sale.customer.name }} (Walk-in)
+            {% else %}
+                Customer: Walk-in
+            {% endif %}
+        </div>
+
+        {% if sale.is_void %}
+        <div class="mb-md px-md py-sm rounded-xl bg-error-container text-on-error-container font-body-md text-[13px]">
+            Voided {{ sale.voided_at|date:"M d, Y H:i" }}{% if sale.voided_by %} by {{ sale.voided_by.username }}{% endif %}.
+            {% if sale.void_reason %}Reason: {{ sale.void_reason }}{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="border-t border-b border-outline-variant border-dashed py-md flex flex-col gap-sm mb-md">
+            {% for item in sale.items.all %}
+            <div class="flex justify-between gap-sm">
+                <div class="min-w-0">
+                    <div class="font-body-md text-body-md text-on-surface truncate">{{ item.description }}</div>
+                    <div class="font-mono-data text-[12px] text-secondary">{{ item.quantity|floatformat:0 }} x ${{ item.unit_price|floatformat:2 }}</div>
+                </div>
+                <div class="font-mono-data text-mono-data text-on-surface shrink-0">${{ item.line_total|floatformat:2|intcomma }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex flex-col gap-1 mb-md">
+            <div class="flex justify-between font-body-md text-body-md text-secondary">
+                <span>Subtotal</span><span class="font-mono-data">${{ sale.subtotal|floatformat:2|intcomma }}</span>
+            </div>
+            <div class="flex justify-between font-body-md text-body-md text-secondary">
+                <span>Tax</span><span class="font-mono-data">${{ sale.tax|floatformat:2|intcomma }}</span>
+            </div>
+            <div class="flex justify-between font-headline-sm text-headline-sm font-bold text-on-surface mt-xs">
+                <span>Total</span><span class="font-mono-data">${{ sale.total|floatformat:2|intcomma }}</span>
+            </div>
+        </div>
+
+        <div class="border-t border-outline-variant pt-md flex flex-col gap-1 mb-lg">
+            {% for payment in sale.payments.all %}
+            <div class="flex justify-between font-body-md text-[13px] text-secondary">
+                <span>{{ payment.get_method_display }}{% if payment.tendered %} (tendered ${{ payment.tendered|floatformat:2 }}){% endif %}</span>
+                <span class="font-mono-data">${{ payment.amount|floatformat:2|intcomma }}</span>
+            </div>
+            {% if payment.change_due %}
+            <div class="flex justify-between font-body-md text-[13px] text-tertiary font-semibold">
+                <span>Change Due</span><span class="font-mono-data">${{ payment.change_due|floatformat:2|intcomma }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if sale.customer and not sale.is_void %}
+        <p class="text-center font-body-md text-[12px] text-tertiary mb-sm">
+            {{ sale.customer.name }} now has {{ sale.customer.loyalty_points }} loyalty point(s) and ${{ sale.customer.store_credit|floatformat:2|intcomma }} store credit.
+        </p>
+        {% endif %}
+        <p class="text-center font-body-md text-[13px] text-secondary mb-lg">Thank you for shopping at ChromaPOS.</p>
+
+        <div class="no-print flex gap-sm mb-sm">
+            <button onclick="window.print()" class="flex-1 h-11 border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">print</span> Print Receipt
+            </button>
+            <a href="{% url 'sales:desk' %}" class="flex-1 h-11 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center justify-center gap-xs">
+                New Sale <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+
+        <form method="post" action="{% url 'sales:email_receipt' sale.pk %}" class="no-print flex gap-sm mb-sm">
+            {% csrf_token %}
+            <input type="email" name="email" placeholder="{% if sale.customer.email %}{{ sale.customer.email }}{% else %}Email address…{% endif %}"
+                   class="flex-1 h-10 px-sm rounded-xl border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px]"/>
+            <button type="submit" class="h-10 px-md border border-outline-variant rounded-xl font-label-md text-[13px] hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[16px]">mail</span> Email
+            </button>
+        </form>
+
+        {% if is_manager and not sale.is_void %}
+        <details class="no-print">
+            <summary class="cursor-pointer font-label-md text-[12px] text-error text-center">Void this sale</summary>
+            <form method="post" action="{% url 'sales:void' sale.pk %}" class="flex flex-col gap-sm mt-sm">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'sales:receipt' sale.pk %}"/>
+                <input type="text" name="reason" placeholder="Reason (optional)"
+                       class="h-10 px-sm rounded-xl border border-outline-variant bg-surface-container-lowest pos-input font-body-md text-[13px]"/>
+                <button type="submit" class="h-10 rounded-xl border border-error text-error font-label-md text-[13px] hover:bg-error-container transition-colors">
+                    Void &amp; Restock
+                </button>
+            </form>
+        </details>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Suppliers - ChromaPOS{% endblock %}
+{% block content %}
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-[1200px] mx-auto w-full">
+    <a href="{% url 'inventory:list' %}" class="text-secondary hover:text-primary font-body-md text-[13px] flex items-center gap-xs w-fit mb-sm">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Inventory
+    </a>
+    <div class="mb-md flex flex-col md:flex-row md:items-end justify-between gap-sm">
+        <div>
+            <h1 class="font-headline-md text-headline-md text-on-background tracking-tight">Suppliers</h1>
+            <p class="font-body-md text-on-surface-variant mt-0.5 text-[13px]">Vendors you order paint, pigments and supplies from.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-sm mb-md">
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm p-sm flex items-center gap-sm">
+            <div class="w-9 h-9 rounded-full bg-primary-container/40 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-primary">local_shipping</span>
+            </div>
+            <div>
+                <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Suppliers</div>
+                <div class="font-mono-data text-[17px] font-semibold text-on-surface">{{ stats.total_suppliers }}</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm p-sm flex items-center gap-sm">
+            <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-emerald-700">check_circle</span>
+            </div>
+            <div>
+                <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Active</div>
+                <div class="font-mono-data text-[17px] font-semibold text-on-surface">{{ stats.active_suppliers }}</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm p-sm flex items-center gap-sm">
+            <div class="w-9 h-9 rounded-full bg-primary-container/40 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-primary">receipt_long</span>
+            </div>
+            <div>
+                <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Total POs</div>
+                <div class="font-mono-data text-[17px] font-semibold text-on-surface">{{ stats.total_pos }}</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm p-sm flex items-center gap-sm">
+            <div class="w-9 h-9 rounded-full bg-error/10 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-error">account_balance_wallet</span>
+            </div>
+            <div>
+                <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Outstanding (A/P)</div>
+                <div class="font-mono-data text-[17px] font-semibold {% if stats.total_outstanding %}text-error{% endif %}">${{ stats.total_outstanding|floatformat:2|intcomma }}</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-lg shadow-sm p-sm flex items-center gap-sm" title="Network-wide, weighted by what was ordered — auto-detected by comparing vendor prices to each product's standard cost">
+            <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-emerald-700">sell</span>
+            </div>
+            <div>
+                <div class="font-label-md text-[10px] text-secondary uppercase tracking-wider">Avg Discount</div>
+                <div class="font-mono-data text-[17px] font-semibold {% if stats.avg_discount > 0 %}text-emerald-700{% elif stats.avg_discount < 0 %}text-error{% endif %}">
+                    {% if stats.avg_discount is not None %}{{ stats.avg_discount|floatformat:1 }}%{% else %}—{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-md">
+        <div class="lg:col-span-2 bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low border-b border-outline-variant font-label-md text-[10px] text-secondary uppercase tracking-wider">
+                        <th class="px-3 py-2.5 font-semibold w-6"></th>
+                        <th class="px-3 py-2.5 font-semibold">Supplier</th>
+                        <th class="px-3 py-2.5 font-semibold">Contact</th>
+                        <th class="px-3 py-2.5 font-semibold text-right">Total POs</th>
+                        <th class="px-3 py-2.5 font-semibold text-right">Outstanding (A/P)</th>
+                        <th class="px-3 py-2.5 font-semibold text-right">Discount</th>
+                        <th class="px-3 py-2.5 font-semibold">Status</th>
+                        <th class="px-3 py-2.5 font-semibold text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="font-body-md text-[13px] text-on-surface">
+                    {% for row in rows %}
+                    <tr class="border-b border-outline-variant/60 last:border-b-0 transition-colors {% if row.orders %}cursor-pointer hover:bg-surface-container-low{% endif %}" {% if row.orders %}data-action="toggle-supplier-orders" data-target="supplier-orders-{{ row.supplier.id }}"{% endif %}>
+                        <td class="px-3 py-2.5 text-secondary">
+                            {% if row.orders %}<span class="material-symbols-outlined text-[16px] supplier-toggle-icon" data-target="supplier-orders-{{ row.supplier.id }}">chevron_right</span>{% endif %}
+                        </td>
+                        <td class="px-3 py-2.5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-primary-container/40 flex items-center justify-center shrink-0 font-label-md text-[13px] font-semibold text-primary uppercase">
+                                    {{ row.supplier.name|slice:":1" }}
+                                </div>
+                                <span class="font-medium">{{ row.supplier.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-3 py-2.5 text-secondary">
+                            {{ row.supplier.contact_name|default:"—" }}
+                            {% if row.supplier.email %}<div class="flex items-center gap-1 font-mono-data text-[11px] mt-0.5"><span class="material-symbols-outlined text-[12px]">mail</span>{{ row.supplier.email }}</div>{% endif %}
+                            {% if row.supplier.phone %}<div class="flex items-center gap-1 font-mono-data text-[11px] mt-0.5"><span class="material-symbols-outlined text-[12px]">call</span>{{ row.supplier.phone }}</div>{% endif %}
+                        </td>
+                        <td class="px-3 py-2.5 text-right font-mono-data">{{ row.po_count }}</td>
+                        <td class="px-3 py-2.5 text-right font-mono-data font-semibold {% if row.outstanding %}text-error{% endif %}">${{ row.outstanding|floatformat:2|intcomma }}</td>
+                        <td class="px-3 py-2.5 text-right">
+                            {% if row.avg_auto_discount is not None %}
+                            <div class="font-mono-data text-[13px] font-semibold {% if row.avg_auto_discount > 0 %}text-emerald-700{% elif row.avg_auto_discount < 0 %}text-error{% endif %}" title="Auto-detected: vendor price vs. standard cost, weighted by amount ordered">
+                                {{ row.avg_auto_discount|floatformat:1 }}%
+                            </div>
+                            {% endif %}
+                            {% if row.avg_quoted_discount is not None %}
+                            <div class="font-mono-data text-[11px] text-secondary" title="Average of the discount % entered by hand on this vendor's PO lines">{{ row.avg_quoted_discount|floatformat:1 }}% quoted</div>
+                            {% endif %}
+                            {% if row.avg_auto_discount is None and row.avg_quoted_discount is None %}
+                            <span class="text-secondary font-mono-data text-[12px]">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-2.5">
+                            {% if row.supplier.is_active %}<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-label-md text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Active</span>
+                            {% else %}<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-secondary font-label-md text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Inactive</span>{% endif %}
+                        </td>
+                        <td class="px-3 py-2.5 text-center">
+                            <div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+                                <a href="{% url 'inventory:purchase_order_create' %}?supplier={{ row.supplier.id }}"
+                                   class="h-7 px-sm rounded-md border border-outline-variant text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center gap-1 font-label-md text-label-md whitespace-nowrap">
+                                    <span class="material-symbols-outlined text-[14px]">add</span> New PO
+                                </a>
+                                <a href="{% url 'inventory:suppliers' %}?edit={{ row.supplier.id }}#supplier-form" title="Edit supplier"
+                                   class="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-colors inline-flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">edit</span>
+                                </a>
+                                <form method="post" action="{% url 'inventory:supplier_toggle' row.supplier.id %}" class="inline-flex">
+                                    {% csrf_token %}
+                                    {% if row.supplier.is_active %}
+                                    <button type="submit" title="Mark inactive" class="w-7 h-7 rounded-md text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors inline-flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-[16px]">toggle_on</span>
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" title="Mark active" class="w-7 h-7 rounded-md text-on-surface-variant hover:text-emerald-600 hover:bg-emerald-50 transition-colors inline-flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-[16px]">toggle_off</span>
+                                    </button>
+                                    {% endif %}
+                                </form>
+                                <form method="post" action="{% url 'inventory:supplier_delete' row.supplier.id %}" class="inline-flex">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Delete supplier" class="w-7 h-7 rounded-md text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors inline-flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-[16px]">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% if row.orders %}
+                    <tr id="supplier-orders-{{ row.supplier.id }}" class="hidden bg-surface-container-low/40">
+                        <td></td>
+                        <td colspan="7" class="px-3 pb-3 pt-0">
+                            <div class="rounded-lg border border-outline-variant overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-surface-container-low font-label-md text-[10px] text-secondary uppercase tracking-wider">
+                                        <th class="px-3 py-1.5 font-semibold">PO Reference</th>
+                                        <th class="px-3 py-1.5 font-semibold">Branch</th>
+                                        <th class="px-3 py-1.5 font-semibold">Date</th>
+                                        <th class="px-3 py-1.5 font-semibold">Status</th>
+                                        <th class="px-3 py-1.5 font-semibold text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="font-body-md text-[12px] text-on-surface">
+                                    {% for order in row.orders %}
+                                    <tr class="border-t border-outline-variant/60 hover:bg-surface-container-low transition-colors">
+                                        <td class="px-3 py-1.5"><a href="{% url 'inventory:purchase_order_detail' order.pk %}" class="text-primary hover:underline font-medium">{{ order.reference }}</a></td>
+                                        <td class="px-3 py-1.5 text-secondary">{{ order.branch.name|default:"—" }}</td>
+                                        <td class="px-3 py-1.5 text-secondary font-mono-data text-[11px]">{{ order.created_at|date:"M j, Y" }}</td>
+                                        <td class="px-3 py-1.5">
+                                            <span class="inline-flex px-2 py-0.5 rounded-full font-label-md text-[10px]
+                                                {% if order.status == 'received' %}bg-emerald-100 text-emerald-700
+                                                {% elif order.status == 'ordered' %}bg-primary-container/40 text-primary
+                                                {% elif order.status == 'cancelled' %}bg-error/10 text-error
+                                                {% else %}bg-surface-container-high text-secondary{% endif %}">{{ order.get_status_display }}</span>
+                                        </td>
+                                        <td class="px-3 py-1.5 text-right font-mono-data">${{ order.total_cost|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr><td colspan="8" class="px-3 py-8 text-center text-secondary font-body-md">No suppliers yet — add one on the right.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        <section id="supplier-form" class="bg-surface-container-lowest rounded-lg p-sm shadow-sm flex flex-col gap-sm h-fit scroll-mt-md">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[18px] text-primary">{% if editing %}edit{% else %}add_business{% endif %}</span>
+                {% if editing %}Edit Supplier{% else %}Add Supplier{% endif %}
+            </h2>
+            <form method="post" class="flex flex-col gap-sm">
+                {% csrf_token %}
+                {% if editing %}<input type="hidden" name="supplier_id" value="{{ editing.id }}"/>{% endif %}
+                {% include "partials/_form_fields.html" with form=form %}
+                <div class="flex gap-xs">
+                    {% if editing %}
+                    <a href="{% url 'inventory:suppliers' %}" class="flex-1 h-9 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center">Cancel</a>
+                    {% endif %}
+                    <button type="submit" class="flex-1 h-9 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors">{% if editing %}Save Changes{% else %}Save Supplier{% endif %}</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+</div>
+<script>
+document.addEventListener('click', (e) => {
+    const row = e.target.closest('[data-action="toggle-supplier-orders"]');
+    if (!row) return;
+    const target = document.getElementById(row.dataset.target);
+    const icon = row.querySelector('.supplier-toggle-icon');
+    if (!target) return;
+    target.classList.toggle('hidden');
+    if (icon) icon.textContent = target.classList.contains('hidden') ? 'chevron_right' : 'expand_more';
+});
+</script>
+{% endblock %}
